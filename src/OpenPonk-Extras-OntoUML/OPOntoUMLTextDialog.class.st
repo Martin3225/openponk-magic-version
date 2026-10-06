@@ -168,7 +168,7 @@ OPOntoUMLTextDialog >> setModelBeforeInitialization: aDiagramController [
 { #category : 'accessing' }
 OPOntoUMLTextDialog >> templateKeys [
 
-	^ #( 'template.phases' 'template.relator' 'template.roleMixin' 'template.properties' 'template.parts' )
+	^ OPOntoUMLTexts patterns collect: [ :each | 'template.' , each ]
 ]
 
 { #category : 'accessing' }

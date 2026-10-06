@@ -562,7 +562,21 @@ OPOntoUMLTexts class >> initialize [
 OPOntoUMLTexts class >> language [
 	"#cs or #en."
 
-	^ Language ifNil: [ #cs ]
+	^ OPOntoUMLLanguageOverride value ifNil: [ Language ifNil: [ #cs ] ]
+]
+
+{ #category : 'accessing' }
+OPOntoUMLTexts class >> during: aLanguage do: aBlock [
+	"Evaluate aBlock with texts in aLanguage (#cs or #en), without changing the language of the user interface."
+
+	^ OPOntoUMLLanguageOverride value: aLanguage asSymbol during: aBlock
+]
+
+{ #category : 'accessing' }
+OPOntoUMLTexts class >> patterns [
+	"Ids of the modelling patterns written as text (template.<id> is the name, template.<id>.text the text)."
+
+	^ #( 'phases' 'relator' 'roleMixin' 'properties' 'parts' )
 ]
 
 { #category : 'accessing' }

@@ -117,7 +117,7 @@ OPMcpProtocol >> initializeResult: aDictionary [
 { #category : 'accessing' }
 OPMcpProtocol >> instructions [
 
-	^ 'Tools for the OpenPonk modeling tool running on this computer (UML/OntoUML class diagrams, ER, BPMN, BORM, DEMO, FSM, Petri nets, Markov chains). Start with list_projects (or create_project / open_project), then get_diagram and list_element_types. Element types are the labels of the diagram''s palette. Elements are addressed by the ids that get_diagram returns. Every change is a normal undoable step in OpenPonk (undo tool or Cmd/Ctrl+Z in the app). export_diagram_png shows the diagram as an image.'
+	^ 'Tools for the OpenPonk modeling tool running on this computer (UML/OntoUML class diagrams, ER, BPMN, BORM, DEMO, FSM, Petri nets, Markov chains). Start with list_projects (or create_project / open_project), then get_diagram and list_element_types. Element types are the labels of the diagram''s palette. Elements are addressed by the ids that get_diagram returns. Every change is a normal undoable step in OpenPonk (undo tool or Cmd/Ctrl+Z in the app). export_diagram_png shows the diagram as an image. For OntoUML diagrams, create_from_text adds many classes and relations at once and verify_model checks the model against the OntoUML rules (the live check of the editor) with explanations.'
 ]
 
 { #category : 'accessing' }

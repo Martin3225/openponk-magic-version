@@ -300,6 +300,47 @@ OPMcpTools >> buildDefinitions [
 			   required: #( 'generalizations' 'disjoint' 'covering' )
 			   selector: #createGeneralizationSet:).
 		  (self
+			   tool: 'verify_model'
+			   description:
+			   'Check the model of an OntoUML diagram against the OntoUML rules: the same live check students see under the canvas in OpenPonk. Errors break OntoUML rules; warnings (include_warnings) are anti-patterns and recommendations that may well be fine. Each problem has the id and name of its element, a title, an explanation of what is wrong and how to fix it, a link to the OntoUML documentation and the label of the quick fix the editor offers, if any. A problem inherited by sub-roles is reported once, at its cause (alsoAffects).'
+			   arguments: {
+					   project.
+					   diagram.
+					   ('include_warnings' -> (self argBoolean: 'Also anti-patterns and recommendations. Default false.')).
+					   ('language' -> (self argString: 'Language of titles and explanations: "en" (default) or "cs" (Czech, as the students see them).')) }
+			   required: #(  )
+			   selector: #verifyModel:).
+		  (self
+			   tool: 'create_from_text'
+			   description:
+			   'Add OntoUML classes, generalizations, generalization sets and relations to a diagram, written in the text notation of the Add from text window of OpenPonk, as one undoable step. Classes already in the diagram are reused by name; new classes are placed automatically (parents above children, relators below the classes they relate) and the diagram is tidied. One statement per line: "Person : Kind"; "Student, Teacher : Role -> Person"; "Child, Adult : Phase -> Person {disjoint, complete}" (also {dc}, {di}, {oc}, {oi}); "Child, Adult -> Person {dc}" for existing classes; "Study 1..* --mediation-- 1 Student : studies" (a multiplicity stands next to its class; the relator, whole or bearer goes on the left); "Driver -- Car : drives" (no stereotype). Names with commas or colons go into double quotes, # starts a comment. Problems are reported by line; with dry_run nothing is changed and the plan is answered.'
+			   arguments: {
+					   project.
+					   diagram.
+					   ('text' -> (self argString: 'The statements, one per line.')).
+					   ('dry_run' -> (self argBoolean: 'Only analyze: answer the plan and the problems. Default false.')).
+					   ('language' -> (self argString: 'Language of the plan and problems: "en" (default) or "cs".')) }
+			   required: #( 'text' )
+			   selector: #createFromText:).
+		  (self
+			   tool: 'list_patterns'
+			   description:
+			   'OntoUML modelling patterns (phases, a role defined by a relator, a RoleMixin, qualities and modes, parts and members) in the text notation of create_from_text. Adapt the names and pass the text to create_from_text, or add a pattern as it is with apply_pattern.'
+			   arguments: { ('language' -> (self argString: 'Language of the names in the patterns: "en" (default) or "cs".')) }
+			   required: #(  )
+			   selector: #listPatterns:).
+		  (self
+			   tool: 'apply_pattern'
+			   description:
+			   'Add a pattern of list_patterns to an OntoUML diagram as it is (as create_from_text would); classes of the same names already in the diagram are reused.'
+			   arguments: {
+					   project.
+					   diagram.
+					   ('pattern' -> (self argString: 'Pattern id from list_patterns, e.g. "phases".')).
+					   ('language' -> (self argString: 'Language of the names: "en" (default) or "cs".')) }
+			   required: #( 'pattern' )
+			   selector: #applyPattern:).
+		  (self
 			   tool: 'auto_layout'
 			   description:
 			   'Arrange a diagram automatically, as one undoable step. "tidy" (the default) keeps the arrangement and only removes overlaps: pushes apart nodes that overlap or that an edge passes through, and moves edge labels (names, multiplicities, generalization sets) to free places. The other algorithms are the layouters of OpenPonk that place all nodes anew: "default" (the notation''s preferred one), "hierarchical" (Sugiyama), "tree", "dominance", "grid"; follow them with "tidy".'
@@ -1316,4 +1357,119 @@ OPMcpTools >> workbenchFor: arguments [
 		  detect: [ :each |
 			  each project uuid asString = key asString or: [ each project name = key ] ]
 		  ifNone: [ OPMcpToolError signal: 'No open project "' , key asString , '"' ]
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> applyPattern: arguments [
+
+	| pattern |
+	pattern := (self arguments: arguments at: 'pattern') asString.
+	(OPOntoUMLTexts patterns includes: pattern) ifFalse: [
+		OPMcpToolError signal: 'Unknown pattern "' , pattern , '". Patterns: ' , (', ' join: OPOntoUMLTexts patterns) ].
+	^ self inLanguageOf: arguments do: [
+		  self
+			  createFromText: (OPOntoUMLTexts at: ('template.' , pattern , '.text') asSymbol)
+			  in: (self ontoUMLDiagramControllerFor: arguments)
+			  dryRun: false ]
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> createFromText: arguments [
+
+	^ self inLanguageOf: arguments do: [
+		  self
+			  createFromText: (self arguments: arguments at: 'text') asString
+			  in: (self ontoUMLDiagramControllerFor: arguments)
+			  dryRun: (arguments at: 'dry_run' ifAbsent: [ false ]) == true ]
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> createFromText: aString in: aDiagramController dryRun: aBoolean [
+
+	| import result |
+	import := OPOntoUMLTextImport on: aDiagramController text: aString.
+	(import hasErrors and: [ aBoolean not ]) ifTrue: [
+		OPMcpToolError signal: 'Nothing was added; the text has problems:' , String lf
+			, (String lf join: import errorLines) ].
+	result := OrderedDictionary new
+		          at: 'plan' put: import planLines;
+		          at: 'problems' put: import errorLines;
+		          yourself.
+	(aBoolean or: [ import hasErrors or: [ import isEmpty ] ]) ifTrue: [
+		result at: 'applied' put: false.
+		^ result ].
+	result
+		at: 'applied' put: true;
+		at: 'created' put: (import apply collect: [ :each | self elementJson: each in: aDiagramController ]).
+	^ result
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> inLanguageOf: arguments do: aBlock [
+
+	| language |
+	language := ((arguments at: 'language' ifAbsent: [ nil ]) ifNil: [ 'en' ]) asString asLowercase.
+	(#( 'en' 'cs' ) includes: language) ifFalse: [ OPMcpToolError signal: '"language" must be "en" or "cs"' ].
+	^ OPOntoUMLTexts during: language asSymbol do: aBlock
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> listPatterns: arguments [
+
+	^ self inLanguageOf: arguments do: [
+		  OrderedDictionary new
+			  at: 'patterns' put: (OPOntoUMLTexts patterns collect: [ :each |
+					   OrderedDictionary new
+						   at: 'id' put: each;
+						   at: 'name' put: (OPOntoUMLTexts at: ('template.' , each) asSymbol);
+						   at: 'text' put: (OPOntoUMLTexts at: ('template.' , each , '.text') asSymbol);
+						   yourself ]);
+			  yourself ]
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> ontoUMLDiagramControllerFor: arguments [
+
+	| diagramController |
+	diagramController := self diagramControllerFor: arguments.
+	(OPOntoUMLStereotypeCatalog isOntoUMLDiagram: diagramController) ifFalse: [
+		OPMcpToolError signal: 'The diagram is not an OntoUML diagram' ].
+	^ diagramController
+]
+
+{ #category : 'private - json' }
+OPMcpTools >> problemJson: aProblem in: aDiagramController [
+
+	^ OrderedDictionary new
+		  at: 'severity' put: aProblem severity;
+		  at: 'rule' put: aProblem rule;
+		  at: 'element' put: ((aDiagramController controllerForModel: aProblem element ifNone: [ nil ])
+				   ifNotNil: [ :controller | self idOf: controller ]
+				   ifNil: [
+					   (aProblem element respondsTo: #uuid) ifTrue: [ aProblem element uuid asString ] ]);
+		  at: 'elementName' put: aProblem elementName;
+		  at: 'title' put: aProblem title;
+		  at: 'explanation' put: aProblem explanation;
+		  at: 'documentation' put: aProblem documentationUrl;
+		  at: 'quickFix' put: (aProblem fix ifNotNil: [ :fix | fix label ]);
+		  at: 'alsoAffects' put: (aProblem alsoFixed collect: [ :each |
+				   OPOntoUMLStereotypeCatalog displayNameOf: each ]) asArray;
+		  yourself
+]
+
+{ #category : 'tools - ontouml' }
+OPMcpTools >> verifyModel: arguments [
+
+	| diagramController problems |
+	diagramController := self ontoUMLDiagramControllerFor: arguments.
+	^ self inLanguageOf: arguments do: [
+		  problems := OPOntoUMLChecker
+			              problemsIn: diagramController model
+			              includeWarnings: (arguments at: 'include_warnings' ifAbsent: [ false ]) == true.
+		  OrderedDictionary new
+			  at: 'diagram' put: diagramController diagramElement name;
+			  at: 'errors' put: (problems count: [ :each | each isError ]);
+			  at: 'warnings' put: (problems count: [ :each | each isWarning ]);
+			  at: 'problems' put: (problems collect: [ :each | self problemJson: each in: diagramController ]);
+			  yourself ]
 ]

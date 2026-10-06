@@ -461,3 +461,60 @@ OPMcpToolsTest >> testProjectLifecycle [
 	self assert: (((self call: 'get_diagram' with: { ('project' -> (reopened at: 'id')) }) at: 'elements')
 			 anySatisfy: [ :each | (each at: 'name') = 'Kůň' ])
 ]
+
+{ #category : 'tests' }
+OPMcpToolsTest >> testOntoUmlTextPatternsAndCheck [
+	"create_from_text and apply_pattern add OntoUML elements, verify_model explains what breaks the rules."
+
+	| project plan created check problem patterns error |
+	project := self call: 'create_project' with: {
+			           ('name' -> 'OntoUML text').
+			           ('notation' -> 'OntoUML') }.
+	projectIds add: (project at: 'id').
+	project := project at: 'id'.
+
+	plan := self call: 'create_from_text' with: {
+			        ('project' -> project).
+			        ('text' -> 'Person : Kind
+Student : Role -> Person').
+			        ('dry_run' -> true) }.
+	self deny: (plan at: 'applied').
+	self assert: (plan at: 'plan') equals: #( '+ class «Person» (Kind)' '+ class «Student» (Role)' '+ generalization Student → Person' ).
+	self assert: ((self call: 'get_diagram' with: { ('project' -> project) }) at: 'elements') isEmpty.
+
+	created := self call: 'create_from_text' with: {
+			           ('project' -> project).
+			           ('text' -> 'Person : Kind
+Student : Role -> Person') }.
+	self assert: (created at: 'applied').
+	self assert: (created at: 'created') size equals: 3.
+
+	check := self call: 'verify_model' with: { ('project' -> project) }.
+	self assert: (check at: 'errors') equals: 1.
+	problem := (check at: 'problems') first.
+	self assert: (problem at: 'rule') equals: 'roleWithoutRelator'.
+	self assert: (problem at: 'elementName') equals: 'Student'.
+	self assert: (problem at: 'element') equals: (((created at: 'created') detect: [ :each | (each at: 'name') = 'Student' ]) at: 'id').
+	self assert: (problem at: 'title') equals: 'Role «Student» is not defined by a relationship'.
+	self
+		assert: (((self call: 'verify_model' with: {
+					    ('project' -> project).
+					    ('language' -> 'cs') }) at: 'problems') first at: 'title')
+		equals: 'Role «Student» není definovaná vztahem'.
+
+	error := self errorOf: 'create_from_text' with: {
+			         ('project' -> project).
+			         ('text' -> 'Study : Relatr') }.
+	self assert: (error includesSubstring: 'Line 1: unknown stereotype «Relatr», did you mean «Relator»?').
+
+	patterns := (self call: 'list_patterns' with: {  }) at: 'patterns'.
+	self assert: (patterns collect: [ :each | each at: 'id' ]) asArray equals: #( 'phases' 'relator' 'roleMixin' 'properties' 'parts' ).
+	self call: 'apply_pattern' with: {
+			('project' -> project).
+			('pattern' -> 'relator') }.
+	"The pattern reuses Person and Student, and its relator defines the role."
+	check := self call: 'verify_model' with: { ('project' -> project) }.
+	self assert: (check at: 'errors') equals: 0.
+	self assert: (((self call: 'get_diagram' with: { ('project' -> project) }) at: 'elements') count: [ :each |
+			 (each at: 'name') = 'Person' ]) equals: 1
+]
