@@ -49,7 +49,7 @@ Volitelný server na `http://127.0.0.1:47100/mcp`. AI asistent přes něj oteví
    ```smalltalk
    Metacello new
    	baseline: 'OpenPonkExtras';
-   	repository: 'github://OWNER/REPO:master/src';
+   	repository: 'github://Ralfcz/openponk-magic-version:master/src';
    	load.
    ```
 
