@@ -89,7 +89,7 @@ Písmena:
 - Tooltip tlačítek palety ukazuje jejich písmeno.
 - **T** (také ⌘T, Ctrl+T a v kontextovém menu „Change stereotype...“) otevře u myši menu stereotypů. Stereotypy jsou seskupené tak, jak se učí: sortály, nesortály a aspekty. Každý má barvu z notace OntoUML, krátké vysvětlení s příkladem a vpravo svoje písmeno, takže menu slouží i jako tahák.
 - U vztahů nabízí menu stereotypy vztahů. Psaní v menu filtruje položky, šipky a Enter vybírají. Aktuální stereotyp je označený a nechybí „bez stereotypu“.
-- ⌘T a Ctrl+T se na Macu nemusí do OpenPonku vůbec dostat: v image fungují (ověřeno i přes obsluhu událostí SDL), ale při ručním zkoušení klávesa do OpenPonku nedorazila. Samotné T funguje vždy.
+- ⌘T a Ctrl+T fungují také. Při prvním ručním zkoušení nereagovaly kvůli chybě OpenPonku: po vrácení vytvoření vybraného vztahu přes undo přestaly fungovat všechny zkratky na plátně. Je opravená, viz úpravy mimo vlastní balíčky.
 
 ### Generalizační množina (⌘G / Ctrl+G, „Generalization set...“)
 
@@ -177,4 +177,5 @@ build/pristine/          čistý image v5.1.0
 - `EditableDropListMorph>>listMorphClass` je nová metoda (dědí ji `OPEditableDropListMorph`).
 - `OPUmlGeneralizationLabel>>defaultTextForSet:on:`, `showIncomplete` a `showOverlapping` (OpenPonk-ClassEditor) jsou přepsané kvůli popiskům množin. Testy OpenPonku `OPUmlGeneralizationSetsOfControllerEditorTest>>testAddNewSetAndUndoRemovesLabelFromDiagram` a `>>testAddNewSetToStandaloneGeneralizationAndUndoClearsLabel` očekávají původní text `set {}`, takže s rozšířením selhávají.
 - `OPUmlClassPropertyViewModel>>writeMultiplicityFrom:to:` a `OPUmlAssociationViewModel>>writeMultiplicityFrom:to:` (OpenPonk-ClassEditor) jsou přepsané a používají `OPMultiplicityParser`.
+- `OPRoassalShapeContext>>roassalShapes:` (OpenPonk-Spec) je přepsaná: vynechá tvary bez controlleru. Výběr plátna jinak mohl držet tvar smazaného prvku, typicky vybraný vztah, jehož vytvoření se vrátilo přes undo. Každá klávesa na plátně pak skončila chybou (jen vypsanou do terminálu) a nefungovala žádná zkratka.
 - `OPEditorLayout>>applyOn:` (OpenPonk-Spec) je přepsaná: vloží panel kontroly OntoUML mezi plátno a lištu se zoomem, jen u editorů pluginu OntoUML.

@@ -269,3 +269,19 @@ OPOntoUMLMenusTest >> selectedPaletteLabel [
 
 	^ (workbench focusedEditor palette instVarNamed: #selectedItem) label
 ]
+
+{ #category : 'tests - stereotypes' }
+OPOntoUMLMenusTest >> testKeysWorkAfterUndoingASelectedRelation [
+	"A new relation is selected; undoing its creation left its shape in the selection and every key on the canvas failed."
+
+	| car garage |
+	self openOntoUML.
+	car := self class: 'Kind' named: 'Car'.
+	garage := self class: 'Kind' named: 'Garage'.
+	self select: { self connect: car to: garage by: 'Association' }.
+	diagramController undoManager undo.
+
+	self pressKey: $k withModifier: 0.
+
+	self assert: self selectedPaletteLabel equals: 'Kind'
+]
