@@ -29,7 +29,8 @@ Class {
 		'docsButton',
 		'updatingList',
 		'hasChecked',
-		'waitingForDiagram'
+		'waitingForDiagram',
+		'applicable'
 	],
 	#classVars : [
 		'ShowList',
@@ -48,6 +49,7 @@ OPOntoUMLProblemsPanel class >> addTo: aLayout of: anEditor [
 	(self isFor: anEditor) ifFalse: [ ^ aLayout ].
 	section := (self canvasSectionIn: aLayout) ifNil: [ ^ aLayout ].
 	panel := self panelOf: anEditor.
+	panel isApplicable ifFalse: [ ^ aLayout ].
 	(section children includes: #zoomToolbar) ifTrue: [ section remove: #zoomToolbar ].
 	section add: panel withConstraints: [ :constraints |
 		constraints
@@ -149,15 +151,19 @@ OPOntoUMLProblemsPanel >> check [
 		^ self ].
 	waitingForDiagram := 0.
 	self ensureSubscribed.
-	(OPOntoUMLStereotypeCatalog isOntoUMLDiagram: diagramController)
-		ifFalse: [ problems := #(  ) ]
-		ifTrue: [
-			problems := [
-			            OPOntoUMLChecker
-				            problemsIn: diagramController model
-				            includeWarnings: self class showWarnings ]
-				            on: Error
-				            do: [ #(  ) ] ].
+	"The OntoUML plugin also gets plain UML class diagrams (a UML package without profiles); they have no panel."
+	(OPOntoUMLStereotypeCatalog isOntoUMLDiagram: diagramController) = applicable ifFalse: [
+		applicable := applicable not.
+		self relayoutEditor ].
+	applicable ifFalse: [
+		problems := #(  ).
+		^ self markers show: problems ].
+	problems := [
+	            OPOntoUMLChecker
+		            problemsIn: diagramController model
+		            includeWarnings: self class showWarnings ]
+		            on: Error
+		            do: [ #(  ) ].
 	hasChecked := true.
 	self updateStatus.
 	self updateList.
@@ -217,6 +223,7 @@ OPOntoUMLProblemsPanel >> initialize [
 	updatingList := false.
 	hasChecked := false.
 	waitingForDiagram := 0.
+	applicable := true.
 	super initialize.
 	OPOntoUMLTexts announcer weak when: OPOntoUMLLanguageChanged send: #languageChanged to: self
 ]
@@ -265,7 +272,7 @@ OPOntoUMLProblemsPanel >> initializePresenters [
 		              action: [ self openDocumentation ];
 		              yourself.
 	self updateTexts.
-	self whenBuiltDo: [ self scheduleCheck ]
+	self whenBuiltDo: [ self scheduleCheckIn: 50 ]
 ]
 
 { #category : 'private' }
@@ -296,10 +303,14 @@ OPOntoUMLProblemsPanel >> isExpanded [
 
 { #category : 'actions' }
 OPOntoUMLProblemsPanel >> languageChanged [
+	"Also received by panels of editors closed but not yet garbage collected; never fail for them."
 
+	[
 	self updateTexts.
 	self relayoutEditor.
-	hasChecked ifTrue: [ self check ]
+	hasChecked ifTrue: [ self check ] ]
+		on: Error
+		do: [ "a closed editor" ]
 ]
 
 { #category : 'accessing' }
@@ -357,6 +368,12 @@ OPOntoUMLProblemsPanel >> reveal: aProblem [
 OPOntoUMLProblemsPanel >> scheduleCheck [
 	"Check shortly after the last of a burst of changes (e.g. typing a name)."
 
+	self scheduleCheckIn: 400
+]
+
+{ #category : 'checking' }
+OPOntoUMLProblemsPanel >> scheduleCheckIn: milliseconds [
+
 	| world |
 	world := self currentWorld.
 	world ifNil: [ ^ self ].
@@ -365,7 +382,14 @@ OPOntoUMLProblemsPanel >> scheduleCheck [
 		addAlarm: #check
 		withArguments: #(  )
 		for: self
-		at: Time millisecondClockValue + 400
+		at: Time millisecondClockValue + milliseconds
+]
+
+{ #category : 'testing' }
+OPOntoUMLProblemsPanel >> isApplicable [
+	"False for a diagram without the OntoUML profile; unknown (true) until the diagram is checked."
+
+	^ applicable
 ]
 
 { #category : 'accessing' }
@@ -390,10 +414,12 @@ OPOntoUMLProblemsPanel >> setModelBeforeInitialization: anEditor [
 
 { #category : 'actions' }
 OPOntoUMLProblemsPanel >> showProblem: aProblem [
-	"Show the list with the problem selected (e.g. its badge was clicked)."
+	"Show the list with the problem selected (e.g. its badge was clicked). A check may have run meanwhile and answered new problem objects, so find the same problem by its element and rule."
 
 	expanded ifFalse: [ self toggleList ].
-	table selectItem: aProblem
+	problems
+		detect: [ :each | each element == aProblem element and: [ each rule = aProblem rule ] ]
+		ifFound: [ :same | table selectItem: same ]
 ]
 
 { #category : 'actions' }

@@ -68,7 +68,7 @@ OPMultiplicityParser class >> write: aString to: aMultiplicityElement [
 	bounds := [ self boundsFrom: aString ]
 		          on: OPInvalidMultiplicity
 		          do: [ :error |
-			          self inform: error messageText.
+			          InformativeNotification signal: error messageText.
 			          ^ self ].
 	aMultiplicityElement lowerValue ifNil: [
 		aMultiplicityElement lowerValue: OPUMLLiteralInteger new ].

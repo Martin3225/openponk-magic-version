@@ -267,3 +267,84 @@ OPOntoUMLCheckTest >> problemsWithWarnings [
 
 	^ OPOntoUMLChecker problemsIn: diagramController model includeWarnings: true
 ]
+
+{ #category : 'tests - panel' }
+OPOntoUMLCheckTest >> testLanguageSwitchUpdatesAnOpenPanel [
+
+	| panel person student |
+	self openOntoUML.
+	person := self class: 'Kind' named: 'Person'.
+	student := self class: 'Role' named: 'Student'.
+	self generalize: student to: person.
+	panel := self panel.
+	panel check.
+	self assert: panel statusText equals: 'OntoUML: 1 chyba'.
+
+	OPOntoUMLTexts languageName: 'English'.
+
+	self assert: panel statusText equals: 'OntoUML: 1 error'.
+	self assert: panel problems first title equals: 'Role «Student» is not defined by a relationship'
+]
+
+{ #category : 'tests - panel' }
+OPOntoUMLCheckTest >> testLiveCheckRunsShortlyAfterEveryChange [
+	"No manual check: an undoable change schedules one (through the undo manager and a World alarm)."
+
+	| panel person student |
+	self openOntoUML.
+	panel := self panel.
+	panel check.
+	person := self class: 'Kind' named: 'Person'.
+	student := self class: 'Role' named: 'Student'.
+	self generalize: student to: person.
+	self assert: panel statusText equals: 'OntoUML: bez chyb'.
+
+	self waitForLiveCheck.
+	self assert: panel statusText equals: 'OntoUML: 1 chyba'.
+	self assert: (OPOntoUMLProblemMarkers on: diagramController) shapes size equals: 1.
+
+	"Typing a name in the properties form is a (coalesced) property change."
+	diagramController undoManager execute: (OPPropertyChangeCommand
+			 viewModel: student viewModel
+			 selector: #name
+			 oldValue: 'Student'
+			 newValue: 'Žák').
+	self waitForLiveCheck.
+	self assert: panel problems first title equals: 'Role «Žák» není definovaná vztahem'
+]
+
+{ #category : 'tests - panel' }
+OPOntoUMLCheckTest >> testPanelHidesForPlainUmlDiagrams [
+	"OpenPonk opens a UML package without profiles with the OntoUML plugin too; such a diagram gets no OntoUML panel."
+
+	| editor panel |
+	self openModel: (OPUMLPackage new
+			 name: 'UML';
+			 yourself).
+	editor := workbench focusedEditor.
+	panel := editor additionalSubpresentersMap at: #ontoUMLProblemsPanel ifAbsent: [ nil ].
+	panel ifNil: [ ^ self ].
+	panel check.
+
+	self deny: panel isApplicable.
+	self deny: ((OPOntoUMLProblemsPanel canvasSectionIn: editor layout) children includes: panel)
+]
+
+{ #category : 'tests - panel' }
+OPOntoUMLCheckTest >> testSettingsOfferTheLanguage [
+
+	| node |
+	node := (SettingTree new
+		         acceptableKeywords: #( #systemsettings );
+		         yourself) nodeList detect: [ :each | each settingDeclaration name = #languageName ].
+
+	self assert: node parentName equals: #openponk.
+	self assert: node settingDeclaration label equals: 'OntoUML assistant language'
+]
+
+{ #category : 'helpers' }
+OPOntoUMLCheckTest >> waitForLiveCheck [
+
+	(Delay forMilliseconds: 450) wait.
+	self currentWorld doOneCycle
+]

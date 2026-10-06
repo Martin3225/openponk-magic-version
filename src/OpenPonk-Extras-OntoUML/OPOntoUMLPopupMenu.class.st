@@ -90,7 +90,7 @@ OPOntoUMLPopupMenu >> diagramController: aDiagramController [
 { #category : 'private' }
 OPOntoUMLPopupMenu >> inform: aString [
 
-	UIManager default inform: aString
+	InformativeNotification signal: aString
 ]
 
 { #category : 'showing' }
