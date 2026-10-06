@@ -1,6 +1,7 @@
 #!/bin/bash
 # Spusti jeden test (Trida selektor) a vypise duvod selhani se zasobnikem.
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
+export OPENPONK_MCP_PORT="${OPENPONK_MCP_TEST_PORT:-47998}"  # headless instance nesmi obsadit port GUI (47100)
 "$DIR/build/Pharo.app/Contents/MacOS/Pharo" --headless "$DIR/build/image/openponk-plugins.image" eval "
 | t s |
 s := WriteStream on: String new.

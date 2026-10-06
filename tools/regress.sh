@@ -2,6 +2,7 @@
 # Spusti vsechny testy z balicku OpenPonk-* (krome OpenPonk-Extras*) nad kopii zadaneho image a vypise selhani.
 # Pouziti: tools/regress.sh <adresar-s-image> <vystupni-soubor>
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
+export OPENPONK_MCP_PORT="${OPENPONK_MCP_TEST_PORT:-47998}"  # headless instance nesmi obsadit port GUI (47100)
 SRC="$1"; OUT="$2"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/opregress.XXXX")"
 cp "$SRC/openponk-plugins.image" "$SRC/openponk-plugins.changes" "$TMP/"
