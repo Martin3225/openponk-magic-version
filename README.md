@@ -1,6 +1,6 @@
 # OpenPonk dev – rozšíření
 
-Oddělená kopie OpenPonku v5.1.0 (macOS ARM) se třemi rozšířeními.
+Oddělená kopie OpenPonku v5.1.0 (macOS ARM) s rozšířeními.
 
 | Rozšíření | Co dělá |
 |---|---|
@@ -9,7 +9,8 @@ Oddělená kopie OpenPonku v5.1.0 (macOS ARM) se třemi rozšířeními.
 | Generalizační množiny | Popisek ukazuje obě vlastnosti, např. `{incomplete, overlapping}`, a u nepojmenované množiny už nepíše „set“. |
 | Multiplicita | Ve formuláři vlastností i v MCP jde psát `x..y` i `x...y`, reálná čísla a desetinnou čárku (`0,5..2,5`). Neplatný zápis se odmítne s hláškou a nic nezmění. |
 | Tidy (uklizení) | Menu Layout > „Tidy (remove overlaps)“ a MCP `auto_layout`: rozestoupí překrývající se třídy a přesune popisky hran na volná místa, rozmístění zachová. |
-| MCP server | `http://127.0.0.1:47100/mcp`: Claude (nebo jiný MCP klient) může číst a upravovat otevřené diagramy. |
+| OntoUML asistent | Živá kontrola modelu se srozumitelným vysvětlením a rychlými opravami, menu stereotypů (⌘T) a generalizačních množin (⌘G), přidávání z textu (⌘E). Viz níže. |
+| MCP server | `http://127.0.0.1:47100/mcp`: Claude (nebo jiný MCP klient) může číst a upravovat otevřené diagramy, kontrolovat OntoUML modely a přidávat prvky z textu. |
 
 ## Spuštění
 
@@ -43,6 +44,61 @@ Známá omezení:
 - Kontejnery (balíčky s třídami uvnitř) zůstávají na místě a hranice (Boundary) se ignorují.
 - Vestavěné layoutery OpenPonku (Hierarchical, Tree, Dominance Tree, Grid) rozmístí uzly znovu od začátku. Na větším modelu dopadly špatně: Hierarchical ho roztáhl do šířky 3800 px a Dominance Tree ho rozházel.
 
+## OntoUML asistent
+
+Psaný pro cvičení, kde studenti s OntoUML začínají: co nejméně hledání v menu a u každé chyby vysvětlení, co je špatně a jak to opravit. Texty asistenta jsou česky nebo anglicky (Settings > OpenPonk > OntoUML assistant language, výchozí čeština). Položky, které přidává do menu OpenPonku, jsou anglicky jako zbytek OpenPonku, aby se v jednom menu nemíchaly jazyky. Termíny OntoUML zůstávají anglicky vždy.
+
+### Živá kontrola modelu
+
+- Pod plátnem OntoUML diagramu je stavový řádek, např. `OntoUML: 3 chyby`. Aktualizuje se chvíli po každé změně (po každém kroku, který jde vrátit přes undo), takže student hned vidí, co jeho úprava způsobila.
+- Prvky s chybou mají na pravém horním rohu červený odznak (s počtem, je-li chyb víc). Po najetí myší se ukáže, co je špatně, kliknutím se otevře seznam s tou chybou.
+- „Zobrazit seznam“ otevře panel: vlevo problémy, vpravo vysvětlení a tlačítka.
+  - **Rychlá oprava**, kde to jde. Fáze bez množiny dostanou množinu `{disjoint, complete}`, existující množina fází se nastaví na `{disjoint, complete}` a u třídy bez stereotypu se otevře menu stereotypů.
+  - **Ukázat v diagramu**: vybere prvek a posune plátno.
+  - **Odkaz do dokumentace OntoUML.**
+- Pravidla jsou verifikace a detekce antipatternů z OpenPonku (OpenPonk-OntoUML-Verifications). Asistent je pouští po jednotlivých prvcích, takže napůl nakreslený vztah nikdy neotevře debugger. Jejich anglické technické hlášky překládá do vysvětlení se jmény prvků a s výčtem povolených stereotypů.
+- Duplicity se slučují (obě pravidla o závislosti role, povolené podtypy a nadtypy). Chyba zděděná podtypy se hlásí jen jednou, u příčiny: „Role «Member» není definovaná vztahem … Tím se vyřeší i: Borrower, Reviewer.“
+- Vlastní kontroly navíc: třída bez stereotypu (chyba, verifikace OpenPonku ji jinak tiše přeskočí), vztah bez stereotypu, více tříd stejného jména a třída bez názvu (varování).
+- Varování (antipatterny a doporučení) se ukazují jen po zaškrtnutí „Ukázat i varování“. Bývají v pořádku a trvale zobrazená by zahlcovala chyby.
+- Odznaky nejsou součástí modelu: nejdou vybrat, neukládají se a při exportu do PNG, SVG i PDF se skryjí, takže se nedostanou do odevzdaného obrázku. Panel se přidává jen do editorů OntoUML, ostatní notace vypadají jako dřív.
+- Kontrola trvá na modelu s 36 třídami asi 10 ms, proto běží přímo v UI procesu.
+
+Původní příkazy Model > Verification (Verify model, Detect anti-patterns) zůstaly beze změny. Výsledky ukazují v Inspectoru a obarvují obrysy prvků, a tyto barvy se ukládají do `.opp`. Studentům je lepší je nedoporučovat.
+
+### Stereotyp (⌘T / Ctrl+T, v kontextovém menu „Change stereotype...“)
+
+- Menu se otevře u myši. Stereotypy jsou seskupené tak, jak se učí: sortály (Kind, SubKind, Role, Phase, Collective, Quantity), nesortály a aspekty. Každý má barvu z notace OntoUML a krátké vysvětlení s příkladem, takže menu slouží i jako tahák.
+- U vztahů nabízí stereotypy vztahů. Psaní filtruje položky (běžné chování menu v Pharu), šipky a Enter vybírají. Aktuální stereotyp je označený a nechybí „bez stereotypu“.
+- Změní celý výběr najednou jako jeden krok undo.
+
+### Generalizační množina (⌘G / Ctrl+G, „Generalization set...“)
+
+- Stačí vybrat podtřídy (šipky generalizací jsou malé a špatně se trefují). Funguje i předek spolu s několika podtřídami, samotný předek (vezmou se všechny jeho podtřídy) nebo šipky generalizací.
+- Čtyři druhy množin menu vysvětluje tím, co znamenají pro instance předka: `{disjoint, complete}` = každá instance «Osoba» patří právě do jedné z nich. U fází je `{disjoint, complete}` označená jako doporučená.
+- Jsou-li generalizace už v množině, množina se změní (případně rozšíří), nepřidá se druhá. „Odebrat z množiny“ ji zruší.
+
+### Přidat z textu (⌘E / Ctrl+E, kontextové menu plátna i menu Model > „Add from text...“)
+
+Okno, kde se prvky píší po řádcích:
+
+```
+Osoba, Univerzita : Kind
+Student, Učitel : Role -> Osoba
+Dítě, Dospělý : Phase -> Osoba {disjoint, complete}     # nebo {dc}, {di}, {oc}, {oi}
+Studium : Relator
+Studium 1..* --mediation-- 1 Student                   # multiplicita stojí u své třídy
+Studium * --mediation-- 1 Univerzita
+Řidič -- Auto : řídí                                    # vztah bez stereotypu, s názvem
+«Kind» Auto                                             # také <<Kind>> Auto
+```
+
+- Při psaní ukazuje, co se přidá, a chyby podle řádků s návrhem opravy: „Řádek 2: neznámý stereotyp «Kid», myslel jsi «Kind»?“ nebo „neznámá třída «Univrzita», myslel jsi «Univerzita»?“. Dokud je v textu chyba, nepřidá nic.
+- Vpravo je tahák zápisu. „Vložit vzor“ vloží jako text vzory OntoUML: fáze, roli definovanou relátorem, RoleMixin, vlastnosti (Quality, Mode) a celek s částmi či kolektiv se členy. Text se pak jen přepíše na vlastní jména. Vzory OpenPonku (Model > Patterns) naproti tomu zakládají samostatný diagram s obecnými jmény.
+- Třídy, které už v diagramu jsou, se použijí podle jména (na velikosti písmen nezáleží). U existující třídy jde i změnit stereotyp. Existující generalizace se nezdvojí.
+- Přidá se vše jako jeden krok undo. Nové třídy se rozmístí do řad podle generalizací (předek nahoře), pod svého předka, pokud už v diagramu je, a relátory dolů mezi třídy, které spojují. Pak proběhne Tidy a nové prvky zůstanou vybrané.
+- Směr vztahů odpovídá pravidlům OpenPonku: vlevo relátor, celek nebo nositel vlastnosti (`Auto 1 --characterization-- 1 Barva`, `Tým 0..1 --memberOf-- 1..* Hráč`). Derivation (vztah relátoru ke vztahu) se textem zapsat nedá.
+- Cmd+Enter nebo Ctrl+Enter přidá, okno zůstane otevřené pro další text.
+
 ## MCP server
 
 Claude Code: v této složce je `.mcp.json`, Claude Code se při startu zeptá na schválení serveru `openponk`. Globálně ho jde přidat takto:
@@ -67,8 +123,11 @@ Nástroje:
 | `delete_elements`, `duplicate_elements` | Smazání (včetně závislých elementů) a duplikace |
 | `undo`, `redo` | Krok zpět a vpřed |
 | `export_diagram_png` | Diagram jako obrázek |
+| `verify_model` | Kontrola OntoUML modelu jako v editoru: id a jméno prvku, vysvětlení, odkaz do dokumentace, rychlá oprava; `language` `en` nebo `cs`, `include_warnings` |
+| `create_from_text` | Přidání prvků zápisem z okna Přidat z textu (s `dry_run` jen plán a problémy) |
+| `list_patterns`, `apply_pattern` | Vzory OntoUML jako text a jejich přidání do diagramu |
 
-- Funguje se všemi notacemi, protože typy elementů se berou z palety diagramu. U OntoUML to znamená stereotypové položky (Kind, SubKind, Role, Relator, Phase…) i vztahy (Mediation, Material, ComponentOf, MemberOf…), které se vytvoří i se stereotypem. Stereotyp existujícího elementu jde změnit přes `set_properties` s `"stereotype": "SubKind"`. Specifické funkce OntoUML (validace, transformace, vzory) přes MCP dostupné nejsou.
+- Funguje se všemi notacemi, protože typy elementů se berou z palety diagramu. U OntoUML to znamená stereotypové položky (Kind, SubKind, Role, Relator, Phase…) i vztahy (Mediation, Material, ComponentOf, MemberOf…), které se vytvoří i se stereotypem. Stereotyp existujícího elementu jde změnit přes `set_properties` s `"stereotype": "SubKind"`. Kontrolu modelu a přidávání z textu zpřístupňují `verify_model`, `create_from_text` a vzory (`list_patterns`, `apply_pattern`). Jazyk jejich textů si volí klient pro každé volání zvlášť, jazyk GUI se tím nemění. Transformace OntoUML přes MCP dostupné nejsou.
 - Export PNG z OpenPonku po změně velikosti plátna občas vykreslí jen výřez: Roassal obnoví kreslicí plochu morphu až během kreslení, tím změní velikost plátna a OpenPonk mezitím posune kameru. MCP proto před exportem nastaví morphu cílovou velikost a plochu obnoví předem.
 - Prázdný UML balíček bez profilů si OpenPonk přiřadí k pluginu „OntoUML UFO-A“ (první vyhovující plugin). Projekt založený jako „UML Class Editor“ se proto v `list_projects` hlásí jako OntoUML. Stejně se chová i GUI.
 - Každá změna je pojmenovaný krok v undo OpenPonku („MCP: …“), takže jde vrátit i přes Cmd+Z.
@@ -79,7 +138,8 @@ Nástroje:
 
 ```
 src/                     Tonel balíčky (zdroj pravdy)
-  OpenPonk-Extras        hover, duplikace
+  OpenPonk-Extras        hover, duplikace, Tidy, multiplicity, OPDiagramBuilder (sdílené vytváření prvků)
+  OpenPonk-Extras-OntoUML  OntoUML asistent: kontrola, panel, menu, přidávání z textu
   OpenPonk-MCP           MCP server a nástroje
   *-Tests                testy
 tools/build.sh           obnoví čistý image z build/pristine, nahraje src/ a uloží
@@ -97,3 +157,5 @@ build/pristine/          čistý image v5.1.0
 - `EditableDropListMorph>>listMorphClass` je nová metoda (dědí ji `OPEditableDropListMorph`).
 - `OPUmlGeneralizationLabel>>defaultTextForSet:on:`, `showIncomplete` a `showOverlapping` (OpenPonk-ClassEditor) jsou přepsané kvůli popiskům množin. Testy OpenPonku `OPUmlGeneralizationSetsOfControllerEditorTest>>testAddNewSetAndUndoRemovesLabelFromDiagram` a `>>testAddNewSetToStandaloneGeneralizationAndUndoClearsLabel` očekávají původní text `set {}`, takže s rozšířením selhávají.
 - `OPUmlClassPropertyViewModel>>writeMultiplicityFrom:to:` a `OPUmlAssociationViewModel>>writeMultiplicityFrom:to:` (OpenPonk-ClassEditor) jsou přepsané a používají `OPMultiplicityParser`.
+- `OPEditorLayout>>applyOn:` (OpenPonk-Spec) je přepsaná: vloží panel kontroly OntoUML mezi plátno a lištu se zoomem, jen u editorů pluginu OntoUML.
+- `OPCanvasExporter>>export` (OpenPonk-Spec) je přepsaná: během exportu schová odznaky kontroly OntoUML.
