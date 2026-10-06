@@ -170,6 +170,35 @@ OPDiagramBuilder >> generalizationSet: aSet disjoint: isDisjoint covering: isCov
 	^ aSet
 ]
 
+{ #category : 'generalization sets' }
+OPDiagramBuilder >> addGeneralizations: aCollectionOfGeneralizations toSet: aSet [
+	"Undoable."
+
+	| command |
+	command := self newGeneralizationSetsCommandFor: aCollectionOfGeneralizations.
+	command recordMembershipChangeOn: aSet added: aCollectionOfGeneralizations asArray removed: #(  ).
+	self execute: command.
+	^ aSet
+]
+
+{ #category : 'generalization sets' }
+OPDiagramBuilder >> removeGeneralizations: aCollectionOfGeneralizations fromSet: aSet [
+	"Undoable. A set left without generalizations is removed from the model."
+
+	| command remaining |
+	command := self newGeneralizationSetsCommandFor: aCollectionOfGeneralizations.
+	remaining := aSet generalizations reject: [ :each | aCollectionOfGeneralizations includes: each ].
+	remaining
+		ifEmpty: [
+			command
+				recordRemoveSet: aSet
+				fromPackage: diagramController model
+				generalizations: aSet generalizations asArray ]
+		ifNotEmpty: [
+			command recordMembershipChangeOn: aSet added: #(  ) removed: aCollectionOfGeneralizations asArray ].
+	self execute: command
+]
+
 { #category : 'commands' }
 OPDiagramBuilder >> inTransactionLabeled: aString do: aBlock [
 
