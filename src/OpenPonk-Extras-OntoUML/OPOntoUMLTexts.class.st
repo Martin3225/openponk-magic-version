@@ -1,7 +1,7 @@
 "
 All texts of the OntoUML assistant (model check, stereotype and generalization set menus, text import) in Czech and English.
 
-The language is chosen in the settings (OpenPonk > OntoUML assistant language); Czech by default, the course this is made for is taught in Czech. OntoUML terms (Kind, Role, Mediation...) stay in English in both languages.
+The language is chosen in the settings (OpenPonk > OntoUML assistant language); Czech by default, the course this is made for is taught in Czech. OntoUML terms (Kind, Role, Mediation...) stay in English in both languages, and so do the items the assistant adds to OpenPonk's own menus (command.*, only in the English table), so that a menu never mixes languages.
 
 Texts may contain placeholders {1}, {2}... filled by #at:with:.
 "
@@ -332,7 +332,6 @@ OPOntoUMLTexts class >> csUI [
 		  #'plan.relation' -> '+ vztah {1}: {2} – {3}{4}'.
 		  #'plan.nothing' -> 'Napiš třídy a vztahy vlevo, tady uvidíš, co se přidá.'.
 		  #'plan.errors' -> 'Oprav nejdřív tyto řádky:'.
-		  #'command.addFromText' -> 'Přidat z textu...'.
 		  #'dialog.title' -> 'Přidat do diagramu z textu'.
 		  #'dialog.add' -> 'Přidat do diagramu'.
 		  #'dialog.close' -> 'Zavřít'.
@@ -405,8 +404,6 @@ Flotila 0..1 --memberOf-- 1..* Auto'.
 		  #'panel.allGood' -> 'Model splňuje pravidla OntoUML, která OpenPonk umí ověřit.'.
 		  #'panel.allGoodWarnings' -> ' Tipy na možné antipatterny ukáže volba Ukázat i varování.'.
 		  #'panel.selectProblem' -> 'Vyber problém v seznamu, ukáže se, co je špatně a jak to opravit.'.
-		  #'command.changeStereotype' -> 'Změnit stereotyp...'.
-		  #'command.generalizationSet' -> 'Generalizační množina...'.
 		  #'stereotypeMenu.titleOne' -> 'Stereotyp: «{1}»'.
 		  #'stereotypeMenu.titleMany' -> 'Stereotyp vybraných prvků ({1})'.
 		  #'stereotypeMenu.undo' -> 'Změna stereotypu'.
