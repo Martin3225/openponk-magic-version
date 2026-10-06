@@ -303,6 +303,8 @@ OPOntoUMLTexts class >> csUI [
 
 	^ {
 		  #'menu.current' -> '(aktuální)'.
+		  #'palette.key' -> 'Klávesa {1}: vybere tento nástroj, s vybranými třídami změní jejich stereotyp'.
+		  #'palette.toolKey' -> 'Klávesa {1}: vybere tento nástroj'.
 		  #'text.line' -> 'Řádek {1}: {2}'.
 		  #'text.cannotParse' -> 'nerozumím řádku, příklady jsou v nápovědě vpravo'.
 		  #'text.missingStereotype' -> 'u «{1}» chybí stereotyp, napiš třeba «{1} : Kind»'.
@@ -427,6 +429,8 @@ OPOntoUMLTexts class >> enUI [
 
 	^ {
 		  #'menu.current' -> '(current)'.
+		  #'palette.key' -> 'Key {1}: chooses this tool; with classes selected, changes their stereotype'.
+		  #'palette.toolKey' -> 'Key {1}: chooses this tool'.
 		  #'text.line' -> 'Line {1}: {2}'.
 		  #'text.cannotParse' -> 'cannot read this line, see the examples on the right'.
 		  #'text.missingStereotype' -> '«{1}» needs a stereotype, e.g. «{1} : Kind»'.

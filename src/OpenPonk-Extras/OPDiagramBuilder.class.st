@@ -315,6 +315,26 @@ OPDiagramBuilder >> placeTopLeftOf: aDiagramElement at: aPoint [
 ]
 
 { #category : 'palette' }
+OPDiagramBuilder >> paletteButton: aLabel ifNone: aBlock [
+	"The button (OPPaletteEntry) of the palette entry aLabel."
+
+	| palette |
+	palette := diagramController editor ifNotNil: [ :editor | editor palette ].
+	palette ifNil: [ ^ aBlock value ].
+	^ palette entries
+		  detect: [ :each | each label asString asLowercase = aLabel asString asLowercase ]
+		  ifNone: aBlock
+]
+
+{ #category : 'palette' }
+OPDiagramBuilder >> selectPaletteTool: aLabel [
+	"Choose the palette entry aLabel as if its button was clicked; the next click on the canvas creates the element. Answer whether there is such an entry."
+
+	(self paletteButton: aLabel ifNone: [ ^ false ]) performAction.
+	^ true
+]
+
+{ #category : 'palette' }
 OPDiagramBuilder >> readPaletteEntries [
 
 	| palette |

@@ -176,6 +176,7 @@ OPOntoUMLMenusTest >> testEveryShortcutHasItsCommandAndNoKeyIsUsedTwice [
 
 	| keys |
 	keys := OPOntoUMLStereotypeCatalog shortcuts collect: [ :each | each second -> each third ].
+	keys := keys , (OPOntoUMLStereotypeCatalog toolShortcuts collect: [ :each | each second -> each third ]).
 	self assert: keys asSet size equals: keys size.
 	self deny: (keys anySatisfy: [ :each | each key = $m or: [ each key = $t ] ]).
 	OPOntoUMLStereotypeCatalog shortcuts do: [ :each |
@@ -206,13 +207,16 @@ OPOntoUMLMenusTest >> testSingleKeysSetTheStereotypeOfSelectedClasses [
 	self assert: (self stereotypeOf: a) equals: 'RoleMixin'.
 	self assert: (self stereotypeOf: b) equals: 'RoleMixin'.
 
-	"A selected relation is left alone; it gets its stereotype from the menu (T)."
+	"A selected relation gets its stereotype from the menu (T); a stereotype key chooses the palette tool instead."
 	car := self class: 'Kind' named: 'Car'.
 	garage := self class: 'Kind' named: 'Garage'.
 	association := self connect: car to: garage by: 'Association'.
 	self select: { association }.
 	self pressKey: $k withModifier: 0.
 	self assert: (self stereotypeOf: association) isNil.
+	self assert: self selectedPaletteLabel equals: 'Kind'.
+	workbench focusedEditor palette selectSelectionTool.
+	self select: { association }.
 	self pressKey: $t withModifier: 0.
 	self assert: self menusInWorld size equals: 1.
 	self assert: (self menusInWorld first items anySatisfy: [ :each | each contents = 'Mediation' ])
@@ -233,4 +237,35 @@ OPOntoUMLMenusTest >> testStereotypeMenuShowsTheKeys [
 	self assert: (items detect: [ :each | each contents = 'Relator' ]) shortcut equals: 'E'.
 	self assert: (items detect: [ :each | each contents = 'RoleMixin' ]) shortcut equals: 'Shift+R'.
 	self assert: (items detect: [ :each | each contents = 'bez stereotypu' ]) shortcut isNil
+]
+
+{ #category : 'tests - stereotypes' }
+OPOntoUMLMenusTest >> testKeysChooseTheToolWhenNoClassIsSelected [
+	"Keys instead of hunting in the palette: K chooses the Kind tool, L Class, G Generalization, A Association; a click on the canvas then creates the element."
+
+	| palette person created |
+	self openOntoUML.
+	palette := workbench focusedEditor palette.
+	person := self class: 'Kind' named: 'Person'.
+	diagramController deselectAll.
+
+	#( #( $k 0 'Kind' ) #( $r 8 'RoleMixin' ) #( $l 0 'Class' ) #( $g 0 'Generalization' ) #( $a 0 'Association' ) )
+		do: [ :each |
+			self pressKey: each first withModifier: each second.
+			self assert: self selectedPaletteLabel equals: each third ].
+
+	self pressKey: $e withModifier: 0.
+	palette selectedTool selectedControllers: { diagramController } onPosition: 300 @ 300.
+	created := diagramController model packagedElements detect: [ :each |
+		           each class == OPUMLClass and: [ each ~~ person model ] ].
+	self assert: (OPOntoUMLStereotypeCatalog stereotypeNameOf: created) equals: 'Relator'.
+	self assert: self selectedPaletteLabel equals: 'Select'.
+	self assert: ((palette entries detect: [ :each | each label = 'Kind' ]) help includesSubstring: 'Klávesa K')
+		description: 'palette tooltips show the keys once the panel has checked'
+]
+
+{ #category : 'helpers' }
+OPOntoUMLMenusTest >> selectedPaletteLabel [
+
+	^ (workbench focusedEditor palette instVarNamed: #selectedItem) label
 ]

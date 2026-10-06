@@ -150,8 +150,25 @@ OPOntoUMLStereotypeCatalog class >> stereotypeNameOf: anElement [
 OPOntoUMLStereotypeCatalog class >> shortcutLabelOf: aStereotypeName [
 	"E.g. 'K', 'Shift+R', or nil (the menu font has no glyph for the shift arrow)."
 
-	^ self shortcuts
-		  detect: [ :each | each first = aStereotypeName ]
+	^ self keyLabelOf: aStereotypeName
+]
+
+{ #category : 'shortcuts' }
+OPOntoUMLStereotypeCatalog class >> shortcuts [
+	"Stereotype name, key, with Shift. Single keys on the canvas set the stereotype of the selected classes, or choose the palette tool of the stereotype when no class is selected (see OPOntoUMLStereotypeKeyCommand): the first letter of the name, or the second one when the first is taken (rElator, mOde, mIxin); Shift for the variant (RoleMixin, PhaseMixin, Collective, Quantity). M is left out: the canvas maximizes the window when M is released."
+
+	^ #( #( 'Kind' $k false ) #( 'SubKind' $s false ) #( 'Role' $r false ) #( 'Phase' $p false )
+	     #( 'Relator' $e false ) #( 'Category' $c false ) #( 'Quality' $q false ) #( 'Mode' $o false )
+	     #( 'Mixin' $i false ) #( 'RoleMixin' $r true ) #( 'PhaseMixin' $p true )
+	     #( 'Collective' $c true ) #( 'Quantity' $q true ) )
+]
+
+{ #category : 'shortcuts' }
+OPOntoUMLStereotypeCatalog class >> keyLabelOf: aPaletteLabel [
+	"The key of a stereotype or a palette tool, e.g. 'K', 'Shift+R', 'L', or nil."
+
+	^ (self shortcuts , self toolShortcuts)
+		  detect: [ :each | each first = aPaletteLabel ]
 		  ifFound: [ :each |
 			  each third
 				  ifTrue: [ 'Shift+' , each second asUppercase asString ]
@@ -160,13 +177,10 @@ OPOntoUMLStereotypeCatalog class >> shortcutLabelOf: aStereotypeName [
 ]
 
 { #category : 'shortcuts' }
-OPOntoUMLStereotypeCatalog class >> shortcuts [
-	"Stereotype name, key, with Shift. Single keys on the canvas set the stereotype of the selected classes (see OPOntoUMLStereotypeKeyCommand): the first letter of the name, or the second one when the first is taken (rElator, mOde, mIxin); Shift for the variant (RoleMixin, PhaseMixin, Collective, Quantity). M is left out: the canvas maximizes the window when M is released."
+OPOntoUMLStereotypeCatalog class >> toolShortcuts [
+	"Palette entry, key, with Shift: keys that always choose a palette tool (see OPOntoUMLPaletteKeyCommand). cLass, as C is Category."
 
-	^ #( #( 'Kind' $k false ) #( 'SubKind' $s false ) #( 'Role' $r false ) #( 'Phase' $p false )
-	     #( 'Relator' $e false ) #( 'Category' $c false ) #( 'Quality' $q false ) #( 'Mode' $o false )
-	     #( 'Mixin' $i false ) #( 'RoleMixin' $r true ) #( 'PhaseMixin' $p true )
-	     #( 'Collective' $c true ) #( 'Quantity' $q true ) )
+	^ #( #( 'Class' $l false ) #( 'Generalization' $g false ) #( 'Association' $a false ) )
 ]
 
 { #category : 'stereotypes' }

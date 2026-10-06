@@ -151,6 +151,7 @@ OPOntoUMLProblemsPanel >> check [
 		^ self ].
 	waitingForDiagram := 0.
 	self ensureSubscribed.
+	self showKeysInPalette.
 	"The OntoUML plugin also gets plain UML class diagrams (a UML package without profiles); they have no panel."
 	(OPOntoUMLStereotypeCatalog isOntoUMLDiagram: diagramController) = applicable ifFalse: [
 		applicable := applicable not.
@@ -410,6 +411,23 @@ OPOntoUMLProblemsPanel >> selectionChanged [
 OPOntoUMLProblemsPanel >> setModelBeforeInitialization: anEditor [
 
 	editor := anEditor
+]
+
+{ #category : 'actions' }
+OPOntoUMLProblemsPanel >> showKeysInPalette [
+	"Tooltips of the palette buttons name their keys (K for Kind...), see OPOntoUMLStereotypeCatalog."
+
+	editor palette ifNil: [ ^ self ].
+	editor palette entries do: [ :each |
+		(OPOntoUMLStereotypeCatalog keyLabelOf: each label asString) ifNotNil: [ :key |
+			| help |
+			help := OPOntoUMLTexts
+				        at: ((OPOntoUMLStereotypeCatalog shortcuts anySatisfy: [ :shortcut |
+						          shortcut first = each label asString ])
+						         ifTrue: [ #'palette.key' ]
+						         ifFalse: [ #'palette.toolKey' ])
+				        with: { key }.
+			each help = help ifFalse: [ each help: help ] ] ]
 ]
 
 { #category : 'actions' }

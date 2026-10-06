@@ -1,5 +1,8 @@
 "
-A single key on the canvas that sets the stereotype of the selected classes of an OntoUML diagram, e.g. K for Kind (see OPOntoUMLStereotypeCatalog class>>#shortcuts). One undoable step for the whole selection; relations and other elements in the selection are left as they are.
+A single key on the canvas of an OntoUML diagram, e.g. K for Kind (see OPOntoUMLStereotypeCatalog class>>#shortcuts):
+
+- with classes selected, it sets their stereotype (one undoable step; relations and other elements in the selection are left as they are);
+- otherwise it chooses the palette tool of the stereotype, so that the next click on the canvas creates such a class.
 
 Each stereotype has a subclass, because a Commander shortcut runs a command class.
 "
@@ -20,8 +23,7 @@ OPOntoUMLStereotypeKeyCommand class >> canBeExecutedInContext: aToolContext [
 
 	^ self isAbstract not and: [
 		  (aToolContext isKindOf: OPRoassalShapeContext) and: [
-			  (OPOntoUMLStereotypeCatalog isOntoUMLDiagram: aToolContext diagramController) and: [
-				  aToolContext models anySatisfy: [ :each | each class == OPUMLClass ] ] ] ]
+			  OPOntoUMLStereotypeCatalog isOntoUMLDiagram: aToolContext diagramController ] ]
 ]
 
 { #category : 'testing' }
@@ -55,9 +57,13 @@ OPOntoUMLStereotypeKeyCommand >> defaultMenuItemName [
 { #category : 'execution' }
 OPOntoUMLStereotypeKeyCommand >> execute [
 
+	| classes |
+	classes := controllers select: [ :each | each model class == OPUMLClass ].
+	classes ifEmpty: [
+		^ (OPDiagramBuilder on: diagramController) selectPaletteTool: self class stereotypeName ].
 	OPOntoUMLStereotypeMenu new
 		diagramController: diagramController;
-		controllers: (controllers select: [ :each | each model class == OPUMLClass ]);
+		controllers: classes;
 		applyStereotypeNamed: self class stereotypeName
 ]
 
