@@ -344,6 +344,38 @@ OPDiagramBuilder >> rename: aController to: aName [
 	self refresh: aController
 ]
 
+{ #category : 'relations' }
+OPDiagramBuilder >> setMultiplicity: aString ofEnd: anEnd in: anAssociationController [
+	"E.g. '1', '0..1', '1..*', '*' (see OPMultiplicityParser) at an end of a UML association. Undoable."
+
+	| bounds old new |
+	bounds := [ OPMultiplicityParser boundsFrom: aString ]
+		          on: OPInvalidMultiplicity
+		          do: [ :error | OPDiagramBuildError signal: error messageText ].
+	old := {
+		       anEnd lowerValue.
+		       anEnd upperValue }.
+	new := {
+		       (OPUMLLiteralInteger new
+			        value: bounds first;
+			        yourself).
+		       (OPUMLLiteralUnlimitedNatural new
+			        value: bounds second;
+			        yourself) }.
+	self execute: (OPBlockCommand
+			 named: 'Change multiplicity'
+			 execute: [
+				 anEnd
+					 lowerValue: new first;
+					 upperValue: new second.
+				 self refresh: anAssociationController ]
+			 undo: [
+				 anEnd
+					 lowerValue: old first;
+					 upperValue: old second.
+				 self refresh: anAssociationController ])
+]
+
 { #category : 'stereotypes' }
 OPDiagramBuilder >> setStereotypeNamed: aNameOrNil of: aController [
 	"E.g. OntoUML 'Kind', 'Role', 'Mediation'; nil removes the stereotype. Undoable."

@@ -303,6 +303,89 @@ OPOntoUMLTexts class >> csUI [
 
 	^ {
 		  #'menu.current' -> '(aktuální)'.
+		  #'text.line' -> 'Řádek {1}: {2}'.
+		  #'text.cannotParse' -> 'nerozumím řádku, příklady jsou v nápovědě vpravo'.
+		  #'text.missingStereotype' -> 'u «{1}» chybí stereotyp, napiš třeba «{1} : Kind»'.
+		  #'text.missingName' -> 'chybí název třídy'.
+		  #'text.missingParent' -> 'za -> chybí předek'.
+		  #'text.twoStereotypes' -> 'stereotyp je zapsaný dvakrát'.
+		  #'text.setNeedsParent' -> 'generalizační množina potřebuje předka: Dítě, Dospělý -> Osoba {disjoint, complete}'.
+		  #'text.setNeedsOneParent' -> 'generalizační množina potřebuje právě jednoho předka'.
+		  #'text.badSet' -> 'nerozumím množině «{1}», napiš třeba {disjoint, complete} nebo {dc}'.
+		  #'text.relationNeedsEnds' -> 'vztah potřebuje třídu na obou stranách: Studium --mediation-- Student'.
+		  #'text.unknownStereotype' -> 'neznámý stereotyp «{1}»'.
+		  #'text.didYouMean' -> ', myslel jsi «{1}»?'.
+		  #'text.relationStereotypeForClass' -> '«{1}» je stereotyp vztahu, třída potřebuje třeba Kind, Role nebo Relator'.
+		  #'text.classStereotypeForRelation' -> '«{1}» je stereotyp třídy, vztahy mají Mediation, Material, ComponentOf...'.
+		  #'text.unknownClass' -> 'neznámá třída «{1}», přidej řádek «{1} : Kind» (nebo s jiným stereotypem)'.
+		  #'text.unknownClassSuggestion' -> 'neznámá třída «{1}», myslel jsi «{2}»?'.
+		  #'text.conflictingStereotypes' -> '«{1}» má v textu dva stereotypy: {2} a {3}'.
+		  #'text.badMultiplicity' -> 'neplatná multiplicita «{1}» (příklady: 1, 0..1, 1..*, *)'.
+		  #'text.selfGeneralization' -> '«{1}» nemůže být předkem sám sobě'.
+		  #'text.derivationNotSupported' -> 'Derivation spojuje relátor se vztahem, to v textu zapsat nejde'.
+		  #'text.undo' -> 'Přidat z textu'.
+		  #'plan.newClass' -> '+ třída «{1}» ({2})'.
+		  #'plan.changeStereotype' -> '~ «{1}»: stereotyp {2} → {3}'.
+		  #'plan.generalization' -> '+ generalizace {1} → {2}'.
+		  #'plan.existingGeneralization' -> '= generalizace {1} → {2} už v diagramu je'.
+		  #'plan.set' -> '+ množina {1}: {2} → {3}'.
+		  #'plan.relation' -> '+ vztah {1}: {2} – {3}{4}'.
+		  #'plan.nothing' -> 'Napiš třídy a vztahy vlevo, tady uvidíš, co se přidá.'.
+		  #'plan.errors' -> 'Oprav nejdřív tyto řádky:'.
+		  #'command.addFromText' -> 'Přidat z textu...'.
+		  #'dialog.title' -> 'Přidat do diagramu z textu'.
+		  #'dialog.add' -> 'Přidat do diagramu'.
+		  #'dialog.close' -> 'Zavřít'.
+		  #'dialog.templates' -> 'Vložit vzor'.
+		  #'dialog.preview' -> 'Co se přidá'.
+		  #'dialog.help' -> 'Třídy
+  Osoba : Kind
+  Student, Učitel : Role -> Osoba
+  «Kind» Auto             (nebo <<Kind>> Auto)
+
+Generalizace a množiny
+  Dítě, Dospělý : Phase -> Osoba {disjoint, complete}
+  Dítě, Dospělý -> Osoba {dc}       (dc, di, oc, oi)
+
+Vztahy (multiplicita stojí u třídy, ke které patří)
+  Studium 1..* --mediation-- 1 Student
+  Auto 1 --characterization-- 1 Barva
+  Auto 1 --componentOf-- 4 Kolo
+  Tým 0..1 --memberOf-- 1..* Hráč
+  Řidič -- Auto : řídí      (bez stereotypu, s názvem)
+
+Vlevo píšeš relátor, celek nebo nositel vlastnosti.
+Třídy, které už v diagramu jsou, se použijí znovu.
+Název s čárkou nebo dvojtečkou dej do "uvozovek".
+Řádky začínající # jsou poznámky.'.
+		  #'template.phases' -> 'Fáze (rozdělení podle stavu)'.
+		  #'template.phases.text' -> 'Osoba : Kind
+Dítě, Dospělý : Phase -> Osoba {disjoint, complete}'.
+		  #'template.relator' -> 'Role definovaná relátorem'.
+		  #'template.relator.text' -> 'Osoba, Univerzita : Kind
+Student : Role -> Osoba
+Studium : Relator
+Studium 1..* --mediation-- 1 Student
+Studium * --mediation-- 1 Univerzita'.
+		  #'template.roleMixin' -> 'Role pro různé druhy (RoleMixin)'.
+		  #'template.roleMixin.text' -> 'Osoba, Firma : Kind
+Zákazník : RoleMixin
+Soukromý zákazník : Role -> Osoba, Zákazník
+Firemní zákazník : Role -> Firma, Zákazník
+Soukromý zákazník, Firemní zákazník -> Zákazník {disjoint, complete}
+Nákup : Relator
+Nákup 1..* --mediation-- 1 Zákazník'.
+		  #'template.properties' -> 'Vlastnosti (Quality, Mode)'.
+		  #'template.properties.text' -> 'Auto, Osoba : Kind
+Barva : Quality
+Nemoc : Mode
+Auto 1 --characterization-- 1 Barva
+Osoba 1 --characterization-- * Nemoc'.
+		  #'template.parts' -> 'Celek a části, kolektiv a členové'.
+		  #'template.parts.text' -> 'Auto, Motor : Kind
+Auto 1 --componentOf-- 1 Motor
+Flotila : Collective
+Flotila 0..1 --memberOf-- 1..* Auto'.
 		  #'error.1' -> 'chyba'.
 		  #'error.2' -> 'chyby'.
 		  #'error.5' -> 'chyb'.
@@ -347,6 +430,89 @@ OPOntoUMLTexts class >> enUI [
 
 	^ {
 		  #'menu.current' -> '(current)'.
+		  #'text.line' -> 'Line {1}: {2}'.
+		  #'text.cannotParse' -> 'cannot read this line, see the examples on the right'.
+		  #'text.missingStereotype' -> '«{1}» needs a stereotype, e.g. «{1} : Kind»'.
+		  #'text.missingName' -> 'a class name is missing'.
+		  #'text.missingParent' -> 'a parent is missing after ->'.
+		  #'text.twoStereotypes' -> 'the stereotype is written twice'.
+		  #'text.setNeedsParent' -> 'a generalization set needs a parent: Child, Adult -> Person {disjoint, complete}'.
+		  #'text.setNeedsOneParent' -> 'a generalization set needs exactly one parent'.
+		  #'text.badSet' -> 'cannot read the set «{1}», write e.g. {disjoint, complete} or {dc}'.
+		  #'text.relationNeedsEnds' -> 'a relation needs a class on both sides: Study --mediation-- Student'.
+		  #'text.unknownStereotype' -> 'unknown stereotype «{1}»'.
+		  #'text.didYouMean' -> ', did you mean «{1}»?'.
+		  #'text.relationStereotypeForClass' -> '«{1}» is a relation stereotype, a class needs e.g. Kind, Role or Relator'.
+		  #'text.classStereotypeForRelation' -> '«{1}» is a class stereotype, relations have Mediation, Material, ComponentOf...'.
+		  #'text.unknownClass' -> 'unknown class «{1}», add a line «{1} : Kind» (or another stereotype)'.
+		  #'text.unknownClassSuggestion' -> 'unknown class «{1}», did you mean «{2}»?'.
+		  #'text.conflictingStereotypes' -> '«{1}» has two stereotypes in the text: {2} and {3}'.
+		  #'text.badMultiplicity' -> 'invalid multiplicity «{1}» (e.g. 1, 0..1, 1..*, *)'.
+		  #'text.selfGeneralization' -> '«{1}» cannot be its own parent'.
+		  #'text.derivationNotSupported' -> 'a Derivation connects a relator with a relation, which cannot be written as text'.
+		  #'text.undo' -> 'Add from text'.
+		  #'plan.newClass' -> '+ class «{1}» ({2})'.
+		  #'plan.changeStereotype' -> '~ «{1}»: stereotype {2} → {3}'.
+		  #'plan.generalization' -> '+ generalization {1} → {2}'.
+		  #'plan.existingGeneralization' -> '= generalization {1} → {2} is already in the diagram'.
+		  #'plan.set' -> '+ set {1}: {2} → {3}'.
+		  #'plan.relation' -> '+ relation {1}: {2} – {3}{4}'.
+		  #'plan.nothing' -> 'Write classes and relations on the left; what will be added shows up here.'.
+		  #'plan.errors' -> 'First fix these lines:'.
+		  #'command.addFromText' -> 'Add from text...'.
+		  #'dialog.title' -> 'Add to the diagram from text'.
+		  #'dialog.add' -> 'Add to diagram'.
+		  #'dialog.close' -> 'Close'.
+		  #'dialog.templates' -> 'Insert pattern'.
+		  #'dialog.preview' -> 'What will be added'.
+		  #'dialog.help' -> 'Classes
+  Person : Kind
+  Student, Teacher : Role -> Person
+  «Kind» Car              (or <<Kind>> Car)
+
+Generalizations and sets
+  Child, Adult : Phase -> Person {disjoint, complete}
+  Child, Adult -> Person {dc}       (dc, di, oc, oi)
+
+Relations (a multiplicity stands next to its class)
+  Study 1..* --mediation-- 1 Student
+  Car 1 --characterization-- 1 Color
+  Car 1 --componentOf-- 4 Wheel
+  Team 0..1 --memberOf-- 1..* Player
+  Driver -- Car : drives    (no stereotype, with a name)
+
+The relator, the whole or the bearer goes on the left.
+Classes already in the diagram are reused.
+Put a name with a comma or colon in "quotes".
+Lines starting with # are comments.'.
+		  #'template.phases' -> 'Phases (partition by state)'.
+		  #'template.phases.text' -> 'Person : Kind
+Child, Adult : Phase -> Person {disjoint, complete}'.
+		  #'template.relator' -> 'Role defined by a relator'.
+		  #'template.relator.text' -> 'Person, University : Kind
+Student : Role -> Person
+Study : Relator
+Study 1..* --mediation-- 1 Student
+Study * --mediation-- 1 University'.
+		  #'template.roleMixin' -> 'Role of different kinds (RoleMixin)'.
+		  #'template.roleMixin.text' -> 'Person, Company : Kind
+Customer : RoleMixin
+Private customer : Role -> Person, Customer
+Corporate customer : Role -> Company, Customer
+Private customer, Corporate customer -> Customer {disjoint, complete}
+Purchase : Relator
+Purchase 1..* --mediation-- 1 Customer'.
+		  #'template.properties' -> 'Properties (Quality, Mode)'.
+		  #'template.properties.text' -> 'Car, Person : Kind
+Color : Quality
+Disease : Mode
+Car 1 --characterization-- 1 Color
+Person 1 --characterization-- * Disease'.
+		  #'template.parts' -> 'Whole and parts, collective and members'.
+		  #'template.parts.text' -> 'Car, Engine : Kind
+Car 1 --componentOf-- 1 Engine
+Fleet : Collective
+Fleet 0..1 --memberOf-- 1..* Car'.
 		  #'error.1' -> 'error'.
 		  #'error.2' -> 'errors'.
 		  #'error.5' -> 'errors'.
