@@ -176,26 +176,36 @@ OPOntoUMLCheckTest >> testWarningsOnlyWhenAskedFor [
 ]
 
 { #category : 'tests - panel' }
-OPOntoUMLCheckTest >> testMarkersAreNotExported [
+OPOntoUMLCheckTest >> testBadgesAreDrawnOverTheCanvasNotInIt [
+	"Badges are no shapes of the diagram (so they are neither saved nor exported) and take the mouse only over themselves."
 
-	| person student markers exporter |
+	| person student shapesBefore markers badge clicked |
 	self openOntoUML.
 	person := self class: 'Kind' named: 'Person'.
 	student := self class: 'Role' named: 'Student'.
 	self generalize: student to: person.
+	shapesBefore := diagramController canvas shapes size.
+
 	self panel check.
+
+	self assert: diagramController canvas shapes size equals: shapesBefore.
 	markers := OPOntoUMLProblemMarkers on: diagramController.
-	self assert: markers shapes size equals: 1.
-	self assert: (diagramController canvas shapes includes: markers shapes first).
+	self assert: markers overlay owner identicalTo: diagramController canvas morph.
+	self assert: markers badges size equals: 1.
+	badge := markers badges first.
+	self assert: badge problems first element identicalTo: student model.
+	self assert: badge isError.
+	self assert: (markers overlay containsPoint: badge center).
+	self deny: (markers overlay containsPoint: badge center + (40 @ 40)).
+	self assert: badge center
+		equals: diagramController canvas morph position
+			+ (diagramController canvas camera fromSpaceToPixel: student roassalShape encompassingRectangle topRight)
+			+ (-3 @ 3).
 
-	exporter := OPOntoUMLRecordingExporter new.
-	exporter silent.
-	exporter diagramController: diagramController to: FileSystem memory root / 'x.png'.
-	exporter export.
-
-	self deny: exporter markersWereVisible.
-	self assert: markers shapes size equals: 1.
-	self assert: (diagramController canvas shapes includes: markers shapes first)
+	clicked := nil.
+	markers onClick: [ :problem | clicked := problem ].
+	markers clicked: badge.
+	self assert: clicked identicalTo: badge problems first
 ]
 
 { #category : 'tests - panel' }
@@ -214,7 +224,7 @@ OPOntoUMLCheckTest >> testPanelChecksAfterEveryChange [
 	panel check.
 
 	self assert: panel statusText equals: 'OntoUML: 1 chyba'.
-	self assert: (OPOntoUMLProblemMarkers on: diagramController) shapes size equals: 1.
+	self assert: (OPOntoUMLProblemMarkers on: diagramController) badges size equals: 1.
 	panel showWarnings: true.
 	self assert: panel statusText equals: 'OntoUML: 1 chyba'.
 	panel showWarnings: false
@@ -301,7 +311,7 @@ OPOntoUMLCheckTest >> testLiveCheckRunsShortlyAfterEveryChange [
 
 	self waitForLiveCheck.
 	self assert: panel statusText equals: 'OntoUML: 1 chyba'.
-	self assert: (OPOntoUMLProblemMarkers on: diagramController) shapes size equals: 1.
+	self assert: (OPOntoUMLProblemMarkers on: diagramController) badges size equals: 1.
 
 	"Typing a name in the properties form is a (coalesced) property change."
 	diagramController undoManager execute: (OPPropertyChangeCommand

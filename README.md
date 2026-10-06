@@ -51,7 +51,7 @@ Psaný pro cvičení, kde studenti s OntoUML začínají: co nejméně hledání
 ### Živá kontrola modelu
 
 - Pod plátnem OntoUML diagramu je stavový řádek, např. `OntoUML: 3 chyby`. Aktualizuje se chvíli po každé změně (po každém kroku, který jde vrátit přes undo), takže student hned vidí, co jeho úprava způsobila.
-- Prvky s chybou mají na pravém horním rohu červený odznak (s počtem, je-li chyb víc). Po najetí myší se ukáže, co je špatně, kliknutím se otevře seznam s tou chybou.
+- Prvky s chybou mají na pravém horním rohu červený odznak (s počtem, je-li chyb víc). Při každém zoomu má stejnou velikost a při tažení třídy jde s ní. Po najetí myší se ukáže, co je špatně, kliknutím se otevře seznam s tou chybou.
 - „Zobrazit seznam“ otevře panel: vlevo problémy, vpravo vysvětlení a tlačítka.
   - **Rychlá oprava**, kde to jde. Fáze bez množiny dostanou množinu `{disjoint, complete}`, existující množina fází se nastaví na `{disjoint, complete}` a u třídy bez stereotypu se otevře menu stereotypů.
   - **Ukázat v diagramu**: vybere prvek a posune plátno.
@@ -60,7 +60,7 @@ Psaný pro cvičení, kde studenti s OntoUML začínají: co nejméně hledání
 - Duplicity se slučují (obě pravidla o závislosti role, povolené podtypy a nadtypy). Chyba zděděná podtypy se hlásí jen jednou, u příčiny: „Role «Member» není definovaná vztahem … Tím se vyřeší i: Borrower, Reviewer.“
 - Vlastní kontroly navíc: třída bez stereotypu (chyba, verifikace OpenPonku ji jinak tiše přeskočí), vztah bez stereotypu, více tříd stejného jména a třída bez názvu (varování).
 - Varování (antipatterny a doporučení) se ukazují jen po zaškrtnutí „Ukázat i varování“. Bývají v pořádku a trvale zobrazená by zahlcovala chyby.
-- Odznaky nejsou součástí modelu: nejdou vybrat, neukládají se a při exportu do PNG, SVG i PDF se skryjí, takže se nedostanou do odevzdaného obrázku. Panel se přidává jen do editorů OntoUML, ostatní notace vypadají jako dřív.
+- Odznaky kreslí průhledná vrstva nad plátnem, nejsou to tvary diagramu. Nejdou vybrat, neukládají se a do exportu (PNG, SVG, PDF i MCP) se nedostanou, takže ani do odevzdaného obrázku. Panel se přidává jen do diagramů OntoUML. Ostatní notace i obyčejné UML diagramy (OpenPonk je otevírá pluginem OntoUML) vypadají jako dřív.
 - Kontrola trvá na modelu s 36 třídami asi 10 ms, proto běží přímo v UI procesu.
 
 Původní příkazy Model > Verification (Verify model, Detect anti-patterns) zůstaly beze změny. Výsledky ukazují v Inspectoru a obarvují obrysy prvků, a tyto barvy se ukládají do `.opp`. Studentům je lepší je nedoporučovat.
@@ -158,4 +158,3 @@ build/pristine/          čistý image v5.1.0
 - `OPUmlGeneralizationLabel>>defaultTextForSet:on:`, `showIncomplete` a `showOverlapping` (OpenPonk-ClassEditor) jsou přepsané kvůli popiskům množin. Testy OpenPonku `OPUmlGeneralizationSetsOfControllerEditorTest>>testAddNewSetAndUndoRemovesLabelFromDiagram` a `>>testAddNewSetToStandaloneGeneralizationAndUndoClearsLabel` očekávají původní text `set {}`, takže s rozšířením selhávají.
 - `OPUmlClassPropertyViewModel>>writeMultiplicityFrom:to:` a `OPUmlAssociationViewModel>>writeMultiplicityFrom:to:` (OpenPonk-ClassEditor) jsou přepsané a používají `OPMultiplicityParser`.
 - `OPEditorLayout>>applyOn:` (OpenPonk-Spec) je přepsaná: vloží panel kontroly OntoUML mezi plátno a lištu se zoomem, jen u editorů pluginu OntoUML.
-- `OPCanvasExporter>>export` (OpenPonk-Spec) je přepsaná: během exportu schová odznaky kontroly OntoUML.

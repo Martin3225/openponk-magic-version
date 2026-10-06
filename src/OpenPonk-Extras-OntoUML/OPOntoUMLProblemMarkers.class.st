@@ -1,33 +1,21 @@
 "
-Badges on the canvas that point at elements with problems: a red circle for errors, an amber one for warnings, with the number of problems. They sit on the top-right corner of a class (and follow it when it is dragged) or in the middle of a relation. Hovering shows the problems, clicking selects the problem in the problems panel.
+Badges that point at elements with problems: a red circle for errors, an amber one for warnings, with the number of problems. They sit on the top-right corner of a class or in the middle of a relation. Hovering shows the problems, clicking selects the problem in the problems panel.
 
-The badges are plain Roassal shapes outside the model: they are not selectable, not saved, not undoable, and they are removed while the diagram is exported (see #hideOn:during:), so they never get into a submitted picture.
+The badges are drawn by a transparent morph laid over the canvas (OPOntoUMLProblemBadgesMorph), not as Roassal shapes: they are no part of the diagram (not among the canvas shapes, not saved, not exported), they keep their size at any zoom, and their places are computed whenever they are drawn, so they follow dragged elements, panning and zooming.
 "
 Class {
 	#name : 'OPOntoUMLProblemMarkers',
 	#superclass : 'Object',
 	#instVars : [
 		'diagramController',
-		'shapes',
-		'problems',
-		'hidden',
-		'onClick'
+		'problemsByElement',
+		'onClick',
+		'overlay'
 	],
 	#category : 'OpenPonk-Extras-OntoUML-Problems',
 	#package : 'OpenPonk-Extras-OntoUML',
 	#tag : 'Problems'
 }
-
-{ #category : 'exporting' }
-OPOntoUMLProblemMarkers class >> hideOn: aDiagramController during: aBlock [
-
-	| markers |
-	markers := (aDiagramController isNil or: [ aDiagramController canvas isNil ]) ifFalse: [
-		           aDiagramController canvas propertyAt: self ifAbsent: [ nil ] ].
-	^ markers
-		  ifNil: [ aBlock value ]
-		  ifNotNil: [ markers hideDuring: aBlock ]
-]
 
 { #category : 'instance creation' }
 OPOntoUMLProblemMarkers class >> on: aDiagramController [
@@ -38,86 +26,71 @@ OPOntoUMLProblemMarkers class >> on: aDiagramController [
 		  ifAbsentPut: [ self new setDiagramController: aDiagramController ]
 ]
 
-{ #category : 'private' }
-OPOntoUMLProblemMarkers >> addMarkerFor: aCollectionOfProblems on: aTargetShape [
+{ #category : 'badges' }
+OPOntoUMLProblemMarkers >> badgeAt: aPoint [
+	"The badge under aPoint (world coordinates), or nil."
 
-	| marker |
-	marker := self markerFor: aCollectionOfProblems.
-	diagramController canvas add: marker.
-	shapes add: marker.
-	(aTargetShape respondsTo: #controlPoints)
-		ifTrue: [ marker translateTo: (self middleOf: aTargetShape) ]
-		ifFalse: [
-			RSLocation new
-				inner;
-				top;
-				right;
-				offset: 6 @ -6;
-				stick: marker on: aTargetShape ]
+	^ self badges
+		  detect: [ :each | (each center distanceTo: aPoint) <= (self radius + 1) ]
+		  ifNone: [ nil ]
 ]
 
-{ #category : 'colors' }
-OPOntoUMLProblemMarkers >> errorColor [
+{ #category : 'badges' }
+OPOntoUMLProblemMarkers >> badgeCenterOn: aShape [
 
-	^ Color fromHexString: 'D93025'
+	| canvas morph |
+	canvas := diagramController canvas.
+	morph := canvas morph.
+	(aShape respondsTo: #controlPoints) ifTrue: [
+		^ morph position + (canvas camera fromSpaceToPixel: (self middleOf: aShape)) ].
+	^ morph position + (canvas camera fromSpaceToPixel: aShape encompassingRectangle topRight)
+	  + (-3 @ 3)
 ]
 
-{ #category : 'showing' }
-OPOntoUMLProblemMarkers >> hideDuring: aBlock [
+{ #category : 'badges' }
+OPOntoUMLProblemMarkers >> badges [
+	"Badges of the elements shown in the diagram, placed where their shapes are now."
 
-	hidden := hidden + 1.
-	self removeShapes.
-	^ aBlock ensure: [
-		  hidden := hidden - 1.
-		  self show: problems ]
+	| badges |
+	badges := OrderedCollection new.
+	diagramController canvas morph ifNil: [ ^ badges ].
+	problemsByElement keysAndValuesDo: [ :element :problems |
+		(self shapeOf: element) ifNotNil: [ :shape |
+			[
+			badges add: (OPOntoUMLProblemBadge new
+					 center: (self badgeCenterOn: shape);
+					 problems: problems;
+					 yourself) ]
+				on: Error
+				do: [ "an element in the middle of rendering" ] ] ].
+	^ badges
+]
+
+{ #category : 'events' }
+OPOntoUMLProblemMarkers >> clicked: aBadge [
+
+	onClick ifNotNil: [ onClick value: aBadge problems first ]
+]
+
+{ #category : 'initialization' }
+OPOntoUMLProblemMarkers >> ensureOverlay [
+
+	| morph |
+	morph := diagramController canvas morph ifNil: [ ^ self ].
+	(overlay notNil and: [ overlay owner == morph ]) ifTrue: [ ^ self ].
+	overlay ifNotNil: [ overlay delete ].
+	overlay := OPOntoUMLProblemBadgesMorph new
+		           markers: self;
+		           bounds: morph bounds;
+		           yourself.
+	morph addMorphFront: overlay
 ]
 
 { #category : 'initialization' }
 OPOntoUMLProblemMarkers >> initialize [
 
 	super initialize.
-	shapes := OrderedCollection new.
-	problems := #(  ).
-	hidden := 0
-]
-
-{ #category : 'private' }
-OPOntoUMLProblemMarkers >> markerFor: aCollectionOfProblems [
-
-	| isError circle label marker |
-	isError := aCollectionOfProblems anySatisfy: [ :each | each isError ].
-	circle := RSCircle new
-		          radius: 8;
-		          color: (isError
-				           ifTrue: [ self errorColor ]
-				           ifFalse: [ self warningColor ]);
-		          border: (RSBorder new
-				           color: Color white;
-				           width: 1.5;
-				           yourself);
-		          yourself.
-	label := RSLabel new
-		         text: (aCollectionOfProblems size > 1
-				          ifTrue: [ aCollectionOfProblems size printString ]
-				          ifFalse: [ '!' ]);
-		         color: Color white;
-		         fontSize: 10;
-		         bold;
-		         yourself.
-	marker := RSComposite new
-		          shapes: {
-				          circle.
-				          label };
-		          model: aCollectionOfProblems;
-		          yourself.
-	marker adjustToChildren.
-	marker @ (RSPopup text: [ :elementProblems |
-		  String cr join: (elementProblems collect: [ :each | each title ]) ]).
-	marker
-		when: RSMouseLeftClick
-		do: [ :event | onClick ifNotNil: [ onClick value: aCollectionOfProblems first ] ]
-		for: self.
-	^ marker
+	problemsByElement := OrderedIdentityDictionary new
 ]
 
 { #category : 'private' }
@@ -133,16 +106,21 @@ OPOntoUMLProblemMarkers >> middleOf: aLineShape [
 
 { #category : 'accessing' }
 OPOntoUMLProblemMarkers >> onClick: aOneArgBlock [
-	"Called with the (first) problem of a clicked marker."
+	"Called with the (first) problem of a clicked badge."
 
 	onClick := aOneArgBlock
 ]
 
-{ #category : 'private' }
-OPOntoUMLProblemMarkers >> removeShapes [
+{ #category : 'accessing' }
+OPOntoUMLProblemMarkers >> overlay [
 
-	shapes do: [ :each | each remove ].
-	shapes removeAll
+	^ overlay
+]
+
+{ #category : 'badges' }
+OPOntoUMLProblemMarkers >> radius [
+
+	^ 8
 ]
 
 { #category : 'initialization' }
@@ -160,32 +138,12 @@ OPOntoUMLProblemMarkers >> shapeOf: anElement [
 	^ controller roassalShape
 ]
 
-{ #category : 'accessing' }
-OPOntoUMLProblemMarkers >> shapes [
-
-	^ shapes
-]
-
 { #category : 'showing' }
 OPOntoUMLProblemMarkers >> show: aCollectionOfProblems [
 
-	| byElement |
-	self removeShapes.
-	problems := aCollectionOfProblems.
-	hidden > 0 ifTrue: [ ^ self ].
-	byElement := IdentityDictionary new.
-	problems do: [ :each |
-		(byElement at: each element ifAbsentPut: [ OrderedCollection new ]) add: each ].
-	byElement keysAndValuesDo: [ :element :elementProblems |
-		(self shapeOf: element) ifNotNil: [ :target |
-			[ self addMarkerFor: elementProblems on: target ]
-				on: Error
-				do: [ "an element in the middle of rendering; next check places it" ] ] ].
-	diagramController canvas signalUpdate
-]
-
-{ #category : 'colors' }
-OPOntoUMLProblemMarkers >> warningColor [
-
-	^ Color fromHexString: 'E8A100'
+	problemsByElement := OrderedIdentityDictionary new.
+	aCollectionOfProblems do: [ :each |
+		(problemsByElement at: each element ifAbsentPut: [ OrderedCollection new ]) add: each ].
+	self ensureOverlay.
+	overlay ifNotNil: [ overlay changed ]
 ]
