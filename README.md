@@ -9,7 +9,7 @@ Oddělená kopie OpenPonku v5.1.0 (macOS ARM) s rozšířeními.
 | Generalizační množiny | Popisek ukazuje obě vlastnosti, např. `{incomplete, overlapping}`, a u nepojmenované množiny už nepíše „set“. |
 | Multiplicita | Ve formuláři vlastností i v MCP jde psát `x..y` i `x...y`, reálná čísla a desetinnou čárku (`0,5..2,5`). Neplatný zápis se odmítne s hláškou a nic nezmění. |
 | Tidy (uklizení) | Menu Layout > „Tidy (remove overlaps)“ a MCP `auto_layout`: rozestoupí překrývající se třídy a přesune popisky hran na volná místa, rozmístění zachová. |
-| OntoUML asistent | Živá kontrola modelu se srozumitelným vysvětlením a rychlými opravami, menu stereotypů (⌘T) a generalizačních množin (⌘G), přidávání z textu (⌘E). Viz níže. |
+| OntoUML asistent | Živá kontrola modelu se srozumitelným vysvětlením a rychlými opravami, stereotyp jedním písmenem (K, S, R, P, E…) nebo z menu (T), generalizační množiny (⌘G), přidávání z textu (⌘E). Viz níže. |
 | MCP server | `http://127.0.0.1:47100/mcp`: Claude (nebo jiný MCP klient) může číst a upravovat otevřené diagramy, kontrolovat OntoUML modely a přidávat prvky z textu. |
 
 ## Spuštění
@@ -65,11 +65,24 @@ Psaný pro cvičení, kde studenti s OntoUML začínají: co nejméně hledání
 
 Původní příkazy Model > Verification (Verify model, Detect anti-patterns) zůstaly beze změny. Výsledky ukazují v Inspectoru a obarvují obrysy prvků, a tyto barvy se ukládají do `.opp`. Studentům je lepší je nedoporučovat.
 
-### Stereotyp (⌘T / Ctrl+T, v kontextovém menu „Change stereotype...“)
+### Stereotyp: písmena na plátně, T pro menu
 
-- Menu se otevře u myši. Stereotypy jsou seskupené tak, jak se učí: sortály (Kind, SubKind, Role, Phase, Collective, Quantity), nesortály a aspekty. Každý má barvu z notace OntoUML a krátké vysvětlení s příkladem, takže menu slouží i jako tahák.
-- U vztahů nabízí stereotypy vztahů. Psaní filtruje položky (běžné chování menu v Pharu), šipky a Enter vybírají. Aktuální stereotyp je označený a nechybí „bez stereotypu“.
-- Změní celý výběr najednou jako jeden krok undo.
+S vybranými třídami (a fokusem na plátně) nastaví stereotyp jediné písmeno. Platí pro celý výběr a jde vrátit jedním undo:
+
+| Klávesa | Stereotyp | Klávesa | Stereotyp |
+|---|---|---|---|
+| K | Kind | C | Category |
+| S | SubKind | Shift+C | Collective |
+| R | Role | Q | Quality |
+| Shift+R | RoleMixin | Shift+Q | Quantity |
+| P | Phase | O | Mode (mOde) |
+| Shift+P | PhaseMixin | I | Mixin (mIxin) |
+| E | Relator (rElator) | | |
+
+- Pravidlo: první písmeno názvu, a když je obsazené, druhé. Shift dává variantu. M je vynechané, protože OpenPonk po puštění M přepíná maximalizaci okna.
+- **T** (také ⌘T, Ctrl+T a v kontextovém menu „Change stereotype...“) otevře u myši menu stereotypů. Stereotypy jsou seskupené tak, jak se učí: sortály, nesortály a aspekty. Každý má barvu z notace OntoUML, krátké vysvětlení s příkladem a vpravo svoje písmeno, takže menu slouží i jako tahák.
+- U vztahů nabízí menu stereotypy vztahů. Psaní v menu filtruje položky, šipky a Enter vybírají. Aktuální stereotyp je označený a nechybí „bez stereotypu“.
+- ⌘T a Ctrl+T se na Macu nemusí do OpenPonku vůbec dostat: v image fungují (ověřeno i přes obsluhu událostí SDL), ale při ručním zkoušení klávesa do OpenPonku nedorazila. Samotné T funguje vždy.
 
 ### Generalizační množina (⌘G / Ctrl+G, „Generalization set...“)
 

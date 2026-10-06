@@ -170,3 +170,67 @@ OPOntoUMLMenusTest >> testStereotypeShortcutAndContextMenu [
 	(self menusInWorld first items detect: [ :each | each contents = 'SubKind' ]) doButtonAction.
 	self assert: (self stereotypeOf: person) equals: 'SubKind'
 ]
+
+{ #category : 'tests - stereotypes' }
+OPOntoUMLMenusTest >> testEveryShortcutHasItsCommandAndNoKeyIsUsedTwice [
+
+	| keys |
+	keys := OPOntoUMLStereotypeCatalog shortcuts collect: [ :each | each second -> each third ].
+	self assert: keys asSet size equals: keys size.
+	self deny: (keys anySatisfy: [ :each | each key = $m or: [ each key = $t ] ]).
+	OPOntoUMLStereotypeCatalog shortcuts do: [ :each |
+		self assert: (OPOntoUMLStereotypeKeyCommand allSubclasses anySatisfy: [ :command |
+				 command stereotypeName = each first ]) ].
+	self
+		assert: OPOntoUMLStereotypeKeyCommand allSubclasses size
+		equals: OPOntoUMLStereotypeCatalog shortcuts size
+]
+
+{ #category : 'tests - stereotypes' }
+OPOntoUMLMenusTest >> testSingleKeysSetTheStereotypeOfSelectedClasses [
+
+	| a b car garage association |
+	self openOntoUML.
+	a := self class: 'Class' named: 'Student'.
+	b := self class: 'Class' named: 'Teacher'.
+	self select: { a. b }.
+
+	self pressKey: $k withModifier: 0.
+	self assert: (self stereotypeOf: a) equals: 'Kind'.
+	self assert: (self stereotypeOf: b) equals: 'Kind'.
+	self pressKey: $r withModifier: 8.
+	self assert: (self stereotypeOf: a) equals: 'RoleMixin'.
+	self pressKey: $e withModifier: 0.
+	self assert: (self stereotypeOf: b) equals: 'Relator'.
+	diagramController undoManager undo.
+	self assert: (self stereotypeOf: a) equals: 'RoleMixin'.
+	self assert: (self stereotypeOf: b) equals: 'RoleMixin'.
+
+	"A selected relation is left alone; it gets its stereotype from the menu (T)."
+	car := self class: 'Kind' named: 'Car'.
+	garage := self class: 'Kind' named: 'Garage'.
+	association := self connect: car to: garage by: 'Association'.
+	self select: { association }.
+	self pressKey: $k withModifier: 0.
+	self assert: (self stereotypeOf: association) isNil.
+	self pressKey: $t withModifier: 0.
+	self assert: self menusInWorld size equals: 1.
+	self assert: (self menusInWorld first items anySatisfy: [ :each | each contents = 'Mediation' ])
+]
+
+{ #category : 'tests - stereotypes' }
+OPOntoUMLMenusTest >> testStereotypeMenuShowsTheKeys [
+
+	| person items |
+	self openOntoUML.
+	person := self class: 'Kind' named: 'Person'.
+	items := (OPOntoUMLStereotypeMenu new
+		          diagramController: diagramController;
+		          controllers: { person };
+		          buildMenu) items select: [ :each | each isKindOf: OPOntoUMLMenuItemMorph ].
+
+	self assert: (items detect: [ :each | each contents = 'Kind' ]) shortcut equals: 'K'.
+	self assert: (items detect: [ :each | each contents = 'Relator' ]) shortcut equals: 'E'.
+	self assert: (items detect: [ :each | each contents = 'RoleMixin' ]) shortcut equals: 'Shift+R'.
+	self assert: (items detect: [ :each | each contents = 'bez stereotypu' ]) shortcut isNil
+]

@@ -50,6 +50,7 @@ OPOntoUMLStereotypeMenu >> buildMenu [
 				self
 					addItem: each
 					note: (self noteFor: each current: each = current)
+					shortcut: (self isForRelations ifFalse: [ OPOntoUMLStereotypeCatalog shortcutLabelOf: each ])
 					icon: (OPOntoUMLStereotypeCatalog swatchOf: each)
 					to: menu
 					selector: #applyStereotypeNamed:

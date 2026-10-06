@@ -146,6 +146,29 @@ OPOntoUMLStereotypeCatalog class >> stereotypeNameOf: anElement [
 		  ifNone: [ nil ]
 ]
 
+{ #category : 'shortcuts' }
+OPOntoUMLStereotypeCatalog class >> shortcutLabelOf: aStereotypeName [
+	"E.g. 'K', 'Shift+R', or nil (the menu font has no glyph for the shift arrow)."
+
+	^ self shortcuts
+		  detect: [ :each | each first = aStereotypeName ]
+		  ifFound: [ :each |
+			  each third
+				  ifTrue: [ 'Shift+' , each second asUppercase asString ]
+				  ifFalse: [ each second asUppercase asString ] ]
+		  ifNone: [ nil ]
+]
+
+{ #category : 'shortcuts' }
+OPOntoUMLStereotypeCatalog class >> shortcuts [
+	"Stereotype name, key, with Shift. Single keys on the canvas set the stereotype of the selected classes (see OPOntoUMLStereotypeKeyCommand): the first letter of the name, or the second one when the first is taken (rElator, mOde, mIxin); Shift for the variant (RoleMixin, PhaseMixin, Collective, Quantity). M is left out: the canvas maximizes the window when M is released."
+
+	^ #( #( 'Kind' $k false ) #( 'SubKind' $s false ) #( 'Role' $r false ) #( 'Phase' $p false )
+	     #( 'Relator' $e false ) #( 'Category' $c false ) #( 'Quality' $q false ) #( 'Mode' $o false )
+	     #( 'Mixin' $i false ) #( 'RoleMixin' $r true ) #( 'PhaseMixin' $p true )
+	     #( 'Collective' $c true ) #( 'Quantity' $q true ) )
+]
+
 { #category : 'stereotypes' }
 OPOntoUMLStereotypeCatalog class >> swatchOf: aStereotypeNameOrNil [
 	"Small icon: the fill color of the stereotype, a line for relations, an empty box for none."

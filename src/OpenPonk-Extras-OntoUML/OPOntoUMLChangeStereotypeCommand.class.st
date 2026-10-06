@@ -1,5 +1,5 @@
 "
-Context menu item and Cmd+T / Ctrl+T shortcut that open the stereotype menu (OPOntoUMLStereotypeMenu) for the selected classes or relations of an OntoUML diagram.
+Context menu item and the T key (also Cmd+T / Ctrl+T) that open the stereotype menu (OPOntoUMLStereotypeMenu) for the selected classes or relations of an OntoUML diagram.
 "
 Class {
 	#name : 'OPOntoUMLChangeStereotypeCommand',
@@ -30,6 +30,14 @@ OPOntoUMLChangeStereotypeCommand class >> canvasShortcutActivation [
 
 	<classAnnotation>
 	^ CmdShortcutActivation by: $t meta for: OPCanvasPresenter
+]
+
+{ #category : 'activation' }
+OPOntoUMLChangeStereotypeCommand class >> canvasKeyActivation [
+	"T alone: Cmd+T and Ctrl+T do not reach OpenPonk on some Macs."
+
+	<classAnnotation>
+	^ CmdShortcutActivation by: $t asKeyCombination for: OPCanvasPresenter
 ]
 
 { #category : 'activation' }

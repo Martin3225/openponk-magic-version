@@ -31,10 +31,24 @@ OPOntoUMLPopupMenu >> addGroupLabel: aString to: aMenu [
 { #category : 'building' }
 OPOntoUMLPopupMenu >> addItem: aName note: aNoteOrNil icon: aFormOrNil to: aMenu selector: aSelector arguments: anArray [
 
+	^ self
+		  addItem: aName
+		  note: aNoteOrNil
+		  shortcut: nil
+		  icon: aFormOrNil
+		  to: aMenu
+		  selector: aSelector
+		  arguments: anArray
+]
+
+{ #category : 'building' }
+OPOntoUMLPopupMenu >> addItem: aName note: aNoteOrNil shortcut: aShortcutOrNil icon: aFormOrNil to: aMenu selector: aSelector arguments: anArray [
+
 	| item |
 	item := OPOntoUMLMenuItemMorph new
 		        contents: aName;
 		        note: aNoteOrNil;
+		        shortcut: aShortcutOrNil;
 		        target: self;
 		        selector: aSelector;
 		        arguments: anArray;
