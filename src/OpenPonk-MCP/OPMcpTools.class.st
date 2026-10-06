@@ -117,39 +117,20 @@ OPMcpTools >> boundsOf: aDiagramElement withTopLeft: aPoint extent: anExtent [
 
 { #category : 'private - json' }
 OPMcpTools >> displayedRectangleOf: aDiagramElement [
-	"The rendered shape when there is one (some shapes size themselves to their content), otherwise the stored bounds."
 
-	| bounds |
-	(aDiagramElement isRendered and: [ aDiagramElement roassalShape isNotNil ]) ifTrue: [
-		^ aDiagramElement roassalShape encompassingRectangle ].
-	bounds := [ aDiagramElement bounds ]
-		          on: Error
-		          do: [ nil ].
-	bounds ifNil: [ ^ nil ].
-	^ Rectangle center: bounds position extent: bounds extent
+	^ OPDiagramBuilder new displayedRectangleOf: aDiagramElement
 ]
 
 { #category : 'private' }
 OPMcpTools >> placeTopLeftOf: aDiagramElement at: aPoint [
-	"Move the shape so that its drawn top-left corner is at aPoint (directly; for freshly created elements)."
 
-	| delta |
-	delta := self topLeftCorrectionOf: aDiagramElement to: aPoint.
-	delta = (0 @ 0) ifTrue: [ ^ self ].
-	aDiagramElement bounds: (OPNodeBounds
-			 withPosition: aDiagramElement bounds position + delta
-			 extent: aDiagramElement bounds extent).
-	aDiagramElement updateRenderFromSelf
+	OPDiagramBuilder new placeTopLeftOf: aDiagramElement at: aPoint
 ]
 
 { #category : 'private' }
 OPMcpTools >> topLeftCorrectionOf: aDiagramElement to: aPoint [
 
-	| rectangle |
-	(aDiagramElement bounds isNil or: [ aDiagramElement isRendered not ]) ifTrue: [ ^ 0 @ 0 ].
-	rectangle := self displayedRectangleOf: aDiagramElement.
-	rectangle ifNil: [ ^ 0 @ 0 ].
-	^ aPoint - rectangle topLeft floor
+	^ OPDiagramBuilder new topLeftCorrectionOf: aDiagramElement to: aPoint
 ]
 
 { #category : 'definitions' }
@@ -373,13 +354,6 @@ OPMcpTools >> call: aToolName arguments: aDictionary [
 		  ifFalse: [ self contentResult: { (self textContent: (NeoJSONWriter toStringPretty: result)) } ]
 ]
 
-{ #category : 'private' }
-OPMcpTools >> completeCreationOf: aController by: aPaletteEntry [
-	"What the palette tool does after creating an element (OntoUML entries apply their stereotype here)."
-
-	(aPaletteEntry at: #onComplete) ifNotNil: [ :block | block cull: aController ]
-]
-
 { #category : 'tools' }
 OPMcpTools >> autoLayout: arguments [
 
@@ -441,26 +415,17 @@ OPMcpTools >> layoutAlgorithms [
 { #category : 'tools' }
 OPMcpTools >> connectElements: arguments [
 
-	| diagramController entry source target edge |
+	| diagramController builder source target edge |
 	diagramController := self diagramControllerFor: arguments.
-	entry := self paletteEntry: (self arguments: arguments at: 'type') in: diagramController.
-	(entry at: #kind) = 'edge' ifFalse: [
-		OPMcpToolError signal: '"' , (entry at: #label) , '" is not an edge type; use create_element' ].
+	builder := OPDiagramBuilder on: diagramController.
 	source := self controllerIn: diagramController id: (self arguments: arguments at: 'source').
 	target := self controllerIn: diagramController id: (self arguments: arguments at: 'target').
-	edge := (entry at: #factory) value.
-	(source canBeSourceFor: edge) ifFalse: [
-		OPMcpToolError signal: (self describe: source) , ' cannot be the source of ' , (entry at: #label) ].
-	"Only remembers the source; validity of the target may depend on it (e.g. in ER diagrams)."
-	source addAsSourceFor: edge.
-	(target canBeTargetFor: edge) ifFalse: [
-		OPMcpToolError signal: (self describe: target) , ' cannot be the target of ' , (entry at: #label)
-			, ' from ' , (self describe: source) ].
 	self inTransactionOf: diagramController labeled: 'MCP: connect' do: [
-		target addAsTargetFor: edge.
-		self completeCreationOf: edge by: entry.
-		(arguments at: 'name' ifAbsent: [ nil ]) ifNotNil: [ :name |
-			self rename: edge to: name ] ].
+		edge := builder
+			        connect: (self arguments: arguments at: 'type')
+			        from: source
+			        to: target
+			        named: ((arguments at: 'name' ifAbsent: [ nil ]) ifNotNil: [ :name | name asString ]) ].
 	diagramController canvas signalUpdate.
 	^ self elementJson: edge in: diagramController
 ]
@@ -491,26 +456,26 @@ OPMcpTools >> controllerIn: aDiagramController id: anId [
 { #category : 'tools' }
 OPMcpTools >> createElement: arguments [
 
-	| diagramController entry controller parent position |
+	| diagramController builder entry controller parent position |
 	diagramController := self diagramControllerFor: arguments.
-	entry := self paletteEntry: (self arguments: arguments at: 'type') in: diagramController.
+	builder := OPDiagramBuilder on: diagramController.
+	entry := builder paletteEntry: (self arguments: arguments at: 'type').
 	(entry at: #kind) = 'node' ifFalse: [
 		OPMcpToolError signal: '"' , (entry at: #label) , '" is an edge type; use connect_elements' ].
-	controller := (entry at: #factory) value.
 	parent := (arguments at: 'parent' ifAbsent: [ nil ])
 		          ifNil: [ diagramController ]
 		          ifNotNil: [ :id | self controllerIn: diagramController id: id ].
-	(parent canBeTargetFor: controller) ifFalse: [
+	(parent canBeTargetFor: (entry at: #factory) value) ifFalse: [
 		OPMcpToolError signal: (parent == diagramController
 				 ifTrue: [ '"' , (entry at: #label) , '" must be created inside a parent element (pass "parent")' ]
 				 ifFalse: [ '"' , (entry at: #label) , '" cannot be created inside ' , (self describe: parent) ]) ].
 	position := self positionFrom: arguments in: diagramController parent: parent.
 	self inTransactionOf: diagramController labeled: 'MCP: create ' , (entry at: #label) do: [
-		parent addAsTargetFor: controller onPosition: position.
-		position ifNotNil: [ self placeTopLeftOf: controller diagramElement at: position ].
-		self completeCreationOf: controller by: entry.
-		(arguments at: 'name' ifAbsent: [ nil ]) ifNotNil: [ :name |
-			self rename: controller to: name ] ].
+		controller := builder
+			              createNode: (entry at: #label)
+			              in: (parent == diagramController ifFalse: [ parent ])
+			              topLeft: position
+			              named: ((arguments at: 'name' ifAbsent: [ nil ]) ifNotNil: [ :name | name asString ]) ].
 	diagramController canvas signalUpdate.
 	^ self elementJson: controller in: diagramController
 ]
@@ -861,48 +826,14 @@ OPMcpTools >> openWorkbenches [
 
 { #category : 'private - resolving' }
 OPMcpTools >> paletteEntriesOf: aDiagramController [
-	"Creation entries of the diagram's palette as dictionaries with #label, #kind, #factory and #onComplete (run after creation, e.g. applies the stereotype of OntoUML entries). The tool of some entries is only referenced from their button action, so look there too."
 
-	| palette |
-	palette := aDiagramController editor ifNotNil: [ :editor | editor palette ].
-	palette ifNil: [ OPMcpToolError signal: 'The diagram has no palette' ].
-	^ palette entries
-		  collect: [ :each | self paletteEntryOf: each ]
-		  thenSelect: [ :each | each isNotNil ]
+	^ (OPDiagramBuilder on: aDiagramController) paletteEntries
 ]
 
 { #category : 'private - resolving' }
 OPMcpTools >> paletteEntry: aLabel in: aDiagramController [
 
-	| entries |
-	entries := self paletteEntriesOf: aDiagramController.
-	^ entries
-		  detect: [ :each | (each at: #label) asLowercase = aLabel asString asLowercase ]
-		  ifNone: [
-			  OPMcpToolError signal: 'Unknown element type "' , aLabel asString , '". Types: '
-				  , (', ' join: (entries collect: [ :each | each at: #label ])) ]
-]
-
-{ #category : 'private - resolving' }
-OPMcpTools >> paletteEntryOf: anEntry [
-
-	| tool action kind |
-	tool := anEntry tool.
-	(tool isNil and: [ (action := anEntry action) isNotNil ]) ifTrue: [
-		tool := ((1 to: action basicSize) collect: [ :index | action basicAt: index ])
-			        detect: [ :each |
-				        (each isKindOf: OPCreationTool) or: [
-					        each isKindOf: OPConnectionCreationTool ] ]
-			        ifNone: [ nil ] ].
-	(tool isKindOf: OPCreationTool) ifTrue: [ kind := 'node' ].
-	(tool isKindOf: OPConnectionCreationTool) ifTrue: [ kind := 'edge' ].
-	(kind isNil or: [ anEntry label isEmptyOrNil ]) ifTrue: [ ^ nil ].
-	^ Dictionary new
-		  at: #label put: anEntry label asString;
-		  at: #kind put: kind;
-		  at: #factory put: (tool instVarNamed: #factory);
-		  at: #onComplete put: (tool instVarNamed: #onComplete);
-		  yourself
+	^ (OPDiagramBuilder on: aDiagramController) paletteEntry: aLabel
 ]
 
 { #category : 'private' }
@@ -1024,12 +955,7 @@ OPMcpTools >> redo: arguments [
 { #category : 'private' }
 OPMcpTools >> rename: aController to: aName [
 
-	(aController model respondsTo: #name:) ifFalse: [
-		OPMcpToolError signal: (self describe: aController) , ' has no name' ].
-	aController model name: aName asString.
-	aController viewModel ifNotNil: [ :viewModel | viewModel modelChanged ].
-	aController diagramElement ifNotNil: [ :element |
-		element isRendered ifTrue: [ aController modelChanged ] ]
+	OPDiagramBuilder new rename: aController to: aName
 ]
 
 { #category : 'tools' }
@@ -1142,55 +1068,17 @@ OPMcpTools >> multiplicityOf: aProperty [
 OPMcpTools >> setStereotype: aNameOrNil of: aController [
 	"Apply the stereotype of the given name from the profiles applied to the diagram's model (e.g. OntoUML 'Kind', 'Role', 'Mediation'), replacing the current one; nil removes it. Undoable."
 
-	| model viewModel previous stereotype command |
-	model := aController model.
-	viewModel := aController viewModel.
-	((model respondsTo: #appliedStereotypes) and: [ viewModel respondsTo: #applyStereotype:to: ])
-		ifFalse: [ OPMcpToolError signal: (self describe: aController) , ' cannot have stereotypes' ].
-	stereotype := aNameOrNil ifNotNil: [
-		              self stereotypeNamed: aNameOrNil asString for: aController ].
-	previous := model appliedStereotypes copy.
-	command := OPMcpBlockCommand
-		           named: 'Change stereotype'
-		           execute: [
-			           stereotype
-				           ifNil: [ viewModel removeStereotypesIn: model ]
-				           ifNotNil: [ viewModel applyStereotype: stereotype to: model ] ]
-		           undo: [
-			           viewModel removeStereotypesIn: model.
-			           previous do: [ :each | model applyStereotype: each ] ].
-	aController undoManager
-		ifNil: [ command execute ]
-		ifNotNil: [ :undoManager | undoManager execute: command ]
+	(OPDiagramBuilder on: aController diagramController)
+		setStereotypeNamed: aNameOrNil
+		of: aController
 ]
 
 { #category : 'private' }
 OPMcpTools >> signalAsToolError: anError [
 
-	(anError isKindOf: OPMcpToolError) ifTrue: [
+	((anError isKindOf: OPMcpToolError) or: [ anError isKindOf: OPDiagramBuildError ]) ifTrue: [
 		OPMcpToolError signal: anError messageText ].
 	OPMcpToolError signal: anError class name , ': ' , anError messageText asString
-]
-
-{ #category : 'private - resolving' }
-OPMcpTools >> stereotypeNamed: aString for: aController [
-
-	| root stereotypes |
-	root := aController diagramController model.
-	stereotypes := (root respondsTo: #profileApplications)
-		               ifTrue: [
-			               root profileApplications flatCollect: [ :each |
-				               each appliedProfile ownedStereotype reject: [ :stereotype |
-					               stereotype isAbstract ] ] ]
-		               ifFalse: [ #(  ) ].
-	^ stereotypes
-		  detect: [ :each | each name asLowercase = aString asLowercase ]
-		  ifNone: [
-			  OPMcpToolError signal: (stereotypes
-					   ifEmpty: [ 'The model has no profile with stereotypes' ]
-					   ifNotEmpty: [
-						   'Unknown stereotype "' , aString , '". Stereotypes: '
-						   , (', ' join: (stereotypes collect: [ :each | each name ])) ]) ]
 ]
 
 { #category : 'private - results' }
@@ -1284,33 +1172,16 @@ OPMcpTools >> umlPropertiesOf: aModel into: aDictionary [
 { #category : 'tools' }
 OPMcpTools >> createGeneralizationSet: arguments [
 
-	| diagramController generalizations generals package set command |
+	| diagramController generalizations set |
 	diagramController := self diagramControllerFor: arguments.
 	generalizations := (self arguments: arguments stringsAt: 'generalizations') collect: [ :each |
 		                   (self controllerIn: diagramController id: each) model ].
-	(generalizations allSatisfy: [ :each | each isKindOf: OPUMLGeneralization ]) ifFalse: [
-		OPMcpToolError signal: 'All elements must be generalizations' ].
-	generals := (generalizations collect: [ :each | each general ]) asSet.
-	generals size = 1 ifFalse: [
-		OPMcpToolError signal: 'The generalizations must have the same general element' ].
-	package := diagramController model.
-	(package respondsTo: #packagedElements) ifFalse: [
-		OPMcpToolError signal: 'The diagram has no package to own the set' ].
-	set := OPUMLGeneralizationSet new.
-	set
-		name: ((arguments at: 'name' ifAbsent: [ nil ]) ifNotNil: [ :name | name asString ]);
-		isDisjoint: (self arguments: arguments at: 'disjoint') == true;
-		isCovering: (self arguments: arguments at: 'covering') == true.
-	command := OPUmlUpdateGeneralizationSetsCommand new.
-	command
-		viewModelRegistry: diagramController viewModelRegistry;
-		affectedGeneralizations: generalizations;
-		recordAddSet: set toPackage: package;
-		recordMembershipChangeOn: set added: generalizations asArray removed: #(  ).
 	self inTransactionOf: diagramController labeled: 'MCP: generalization set' do: [
-		diagramController undoManager
-			ifNil: [ command execute ]
-			ifNotNil: [ :undoManager | undoManager execute: command ] ].
+		set := (OPDiagramBuilder on: diagramController)
+			       newGeneralizationSetOf: generalizations
+			       disjoint: (self arguments: arguments at: 'disjoint') == true
+			       covering: (self arguments: arguments at: 'covering') == true
+			       named: ((arguments at: 'name' ifAbsent: [ nil ]) ifNotNil: [ :name | name asString ]) ].
 	diagramController canvas signalUpdate.
 	^ self generalizationSetJson: set in: diagramController
 ]
@@ -1365,7 +1236,7 @@ OPMcpTools >> setAssociationEnd: arguments [
 		(#( 'none' 'shared' 'composite' ) includes: kind asString) ifFalse: [
 			OPMcpToolError signal: 'Aggregation must be "none", "shared" or "composite"' ].
 		newState at: 4 put: kind asString asSymbol ].
-	command := OPMcpBlockCommand
+	command := OPBlockCommand
 		           named: 'Change association end'
 		           execute: [ self setEnd: end to: newState ]
 		           undo: [ self setEnd: end to: oldState ].
