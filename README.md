@@ -187,8 +187,11 @@ Studium * --mediation-- 1 Univerzita
 ### Tidy
 
 - Zachová rozmístění a řeší jen překryvy, celé jako jeden krok undo.
-- Třídy, které se překrývají nebo jsou blíž než 30 px, odsune od sebe. Třídu, přes kterou vede cizí hrana, odsune stranou.
-- Každý popisek hrany (jméno, multiplicita, role, generalizační množina) zkusí na několika místech podél hrany a vybere místo s nejmenším překryvem.
+- Třídy, které jsou skoro v jedné řadě nebo sloupci (středy do 40 px od sebe), zarovná přesně na společnou řadu nebo sloupec. Specifičtější třídu do řady její obecnější třídy nedá.
+- Třídy, které se překrývají nebo jsou blíž než 30 px, odsune od sebe. Třídu, přes kterou vede cizí hrana nebo kolem které vede blíž než 15 px, odsune stranou (jen tak daleko, aby hranu minula). Obojí opakuje, dokud se nic nepřekrývá, protože s odsunutou třídou se hýbou i její hrany.
+- Hrany trasuje znovu: nejdřív zruší všechny body zlomu (i ty, které jsi přidal sám, kromě smyček z třídy do sebe) a rovnou hranu, která kříží jiné hrany, ohne kolem tříd, pokud je objížďka kratší než asi 400 px na každé ušetřené křížení a nevede přes žádnou třídu. Přednost mají pravé úhly (tvar L, Z nebo U), šikmé úseky použije jen výjimečně. Původní body zlomu vrátí ⌘Z / Ctrl+Z.
+- Když křížení zůstanou, zkusí třídy posunout nebo prohodit (posun o 1 px se počítá jako 1 px objížďky, odstupy mezi třídami a od hran zůstanou dodržené) a hrany pak ohne znovu. Posuny nechá jen tehdy, když skončí s méně kříženími než samotné ohýbání. Všechna křížení odstranit nejde vždy, např. když mezi dvěma spojenými třídami leží celá hierarchie jiných tříd.
+- Každý popisek hrany (jméno, multiplicita, role, generalizační množina) zkusí na několika místech podél hrany a v několika vzdálenostech od ní a vybere místo s nejmenším překryvem. Vzdálenosti se počítají od výchozí vzdálenosti popisku, takže opakované Tidy popisky od hran neodsouvá čím dál dál.
 - Kontejnery (balíčky s třídami uvnitř) zůstávají na místě.
 - Vestavěné layoutery OpenPonku (Hierarchical, Tree, Grid…) naproti tomu rozmístí všechno znovu od začátku.
 
