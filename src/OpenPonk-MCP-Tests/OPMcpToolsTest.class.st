@@ -404,6 +404,14 @@ OPMcpToolsTest >> testAutoLayout [
 	self call: 'auto_layout' with: {
 			('project' -> project).
 			('algorithm' -> 'grid') }.
+	result := self call: 'auto_layout' with: {
+			          ('project' -> project).
+			          ('algorithm' -> 'rearrange') }.
+	self assert: (result at: 'algorithm') equals: 'rearrange'.
+	first := (result at: 'elements') detect: [ :each | (each at: 'name') = 'A' ].
+	second := (result at: 'elements') detect: [ :each | (each at: 'name') = 'B' ].
+	self deny: (((first at: 'x') @ (first at: 'y') extent: (first at: 'width') @ (first at: 'height'))
+			 intersects: ((second at: 'x') @ (second at: 'y') extent: (second at: 'width') @ (second at: 'height'))).
 	self assert: ((self errorOf: 'auto_layout' with: {
 				  ('project' -> project).
 				  ('algorithm' -> 'spiral') }) includesSubstring: 'tidy')

@@ -28,7 +28,8 @@ Rozšíření pro modelovací nástroj [OpenPonk](https://openponk.org) 5.1.0:
 | Funkce | Jak na ni |
 |---|---|
 | Duplikace | ⌘D / Ctrl+D nebo „Duplicate“ v kontextovém menu. Zkopíruje vybrané prvky i s obsahem a hranami mezi nimi. |
-| Tidy (uklizení) | Menu Layout > „Tidy (remove overlaps)“. Rozestoupí překrývající se prvky a přesune popisky hran na volná místa, rozmístění zachová. |
+| Tidy (uklizení) | Menu Layout > „Tidy (remove overlaps)“. Rozestoupí překrývající se prvky, ohne kolem nich křížící se hrany a přesune popisky hran na volná místa, rozmístění zachová. |
+| Rearrange (přeskládání) | Menu Layout > „Rearrange (fewest crossings)“. Rozmístí celý diagram znovu od nuly tak, aby se hrany co nejméně křížily, a pak ho uklidí jako Tidy. |
 | Multiplicity | Ve vlastnostech jde psát `0..*`, `2...5`, desetinná čísla i desetinnou čárku (`0,5..2,5`). Neplatný zápis se odmítne s hláškou. |
 | Popisky generalizačních množin | Ukazují obě vlastnosti, např. `{incomplete, overlapping}`. |
 | Rozbalovací seznamy | Položka pod myší je zvýrazněná. |
@@ -193,7 +194,16 @@ Studium * --mediation-- 1 Univerzita
 - Když křížení zůstanou, zkusí třídy posunout nebo prohodit (posun o 1 px se počítá jako 1 px objížďky, odstupy mezi třídami a od hran zůstanou dodržené) a hrany pak ohne znovu. Posuny nechá jen tehdy, když skončí s méně kříženími než samotné ohýbání. Všechna křížení odstranit nejde vždy, např. když mezi dvěma spojenými třídami leží celá hierarchie jiných tříd.
 - Každý popisek hrany (jméno, multiplicita, role, generalizační množina) zkusí na několika místech podél hrany a v několika vzdálenostech od ní a vybere místo s nejmenším překryvem. Vzdálenosti se počítají od výchozí vzdálenosti popisku, takže opakované Tidy popisky od hran neodsouvá čím dál dál.
 - Kontejnery (balíčky s třídami uvnitř) zůstávají na místě.
-- Vestavěné layoutery OpenPonku (Hierarchical, Tree, Grid…) naproti tomu rozmístí všechno znovu od začátku.
+- Vestavěné layoutery OpenPonku (Hierarchical, Tree, Grid…) a Rearrange naproti tomu rozmístí všechno znovu od začátku.
+
+### Rearrange
+
+- Na původním rozmístění nezáleží, diagram poskládá znovu. Celé je to jeden krok undo („Rearrange“).
+- Třídy rozmístí do mřížky s místem na popisky. Obecnější třída generalizace jde nad specifičtější.
+- Hledá rozmístění s co nejmenším počtem křížení hran, bez hran vedoucích přes třídy a s co nejkratšími hranami. Začne rozvržením podle vzdáleností v grafu (stress majorization), pak ho vylepšuje simulovaným žíháním (tři běhy, vezme nejlepší).
+- Výsledek je pro stejný diagram pokaždé stejný. Kontejnery (balíčky s třídami uvnitř) zůstávají na místě.
+- Na závěr proběhne Tidy: ohne hrany, které se ještě kříží, a rozmístí popisky.
+- Diagram se 40 třídami trvá asi 3 s.
 
 ## MCP server
 
@@ -225,7 +235,7 @@ Ve složce tohoto repozitáře to není potřeba, je v ní `.mcp.json`. Jiné MC
 | `set_properties`, `move_element` | Změna vlastností (včetně UML `type`, `multiplicity` a `stereotype`), přesun a změna velikosti |
 | `set_association_end` | Konec asociace: role, multiplicita, agregace, navigabilita |
 | `create_generalization_set` | Generalizační množina (disjoint/overlapping, complete/incomplete) |
-| `auto_layout` | `tidy` (výchozí) nebo vestavěné layoutery OpenPonku |
+| `auto_layout` | `tidy` (výchozí), `rearrange` nebo vestavěné layoutery OpenPonku |
 | `delete_elements`, `duplicate_elements` | Smazání (včetně závislých prvků) a duplikace |
 | `undo`, `redo` | Krok zpět a vpřed |
 | `export_diagram_png` | Diagram jako obrázek |
@@ -243,7 +253,7 @@ Ve složce tohoto repozitáře to není potřeba, je v ní `.mcp.json`. Jiné MC
 ```
 src/                          Tonel balíčky
   BaselineOfOpenPonkExtras    skupiny default (bez testů) a all (s testy)
-  OpenPonk-Extras             duplikace, Tidy, multiplicity, hover, OPDiagramBuilder (vytváření prvků)
+  OpenPonk-Extras             duplikace, Tidy, Rearrange, multiplicity, hover, OPDiagramBuilder (vytváření prvků)
   OpenPonk-Extras-OntoUML     OntoUML asistent: kontrola, panel, menu, klávesy, přidávání z textu
   OpenPonk-MCP                MCP server a nástroje
   *-Tests                     testy (SUnit)

@@ -343,11 +343,11 @@ OPMcpTools >> buildDefinitions [
 		  (self
 			   tool: 'auto_layout'
 			   description:
-			   'Arrange a diagram automatically, as one undoable step. "tidy" (the default) keeps the arrangement and only removes overlaps: pushes apart nodes that overlap or that an edge passes through, and moves edge labels (names, multiplicities, generalization sets) to free places. The other algorithms are the layouters of OpenPonk that place all nodes anew: "default" (the notation''s preferred one), "hierarchical" (Sugiyama), "tree", "dominance", "grid"; follow them with "tidy".'
+			   'Arrange a diagram automatically, as one undoable step. "tidy" (the default) keeps the arrangement and only removes overlaps: pushes apart nodes that overlap or that an edge passes through, routes edges that cross others around obstacles at right angles (moving nodes when that removes crossings), and moves edge labels (names, multiplicities, generalization sets) to free places. "rearrange" places all nodes anew so that edges cross as little as possible (general classes above specific ones) and then tidies. The other algorithms are the layouters of OpenPonk that place all nodes anew: "default" (the notation''s preferred one), "hierarchical" (Sugiyama), "tree", "dominance", "grid"; follow them with "tidy".'
 			   arguments: {
 					   project.
 					   diagram.
-					   ('algorithm' -> (self argString: '"tidy" (default), "default", "hierarchical", "tree", "dominance" or "grid".')) }
+					   ('algorithm' -> (self argString: '"tidy" (default), "rearrange", "default", "hierarchical", "tree", "dominance" or "grid".')) }
 			   required: #(  )
 			   selector: #autoLayout:).
 		  (self
@@ -406,9 +406,13 @@ OPMcpTools >> autoLayout: arguments [
 		self inTransactionOf: diagramController labeled: 'MCP: tidy' do: [
 			(OPDiagramTidier on: diagramController) tidy ].
 		^ self layoutResultOf: diagramController algorithm: algorithm ].
+	algorithm = 'rearrange' ifTrue: [
+		self inTransactionOf: diagramController labeled: 'MCP: rearrange' do: [
+			(OPDiagramRearranger on: diagramController) rearrange ].
+		^ self layoutResultOf: diagramController algorithm: algorithm ].
 	selector := self layoutAlgorithms at: algorithm ifAbsent: [
 		            OPMcpToolError signal: 'Unknown algorithm "' , algorithm , '". Algorithms: '
-			            , (', ' join: #( 'tidy' ) , self layoutAlgorithms keys asSortedCollection asArray) ].
+			            , (', ' join: #( 'tidy' 'rearrange' ) , self layoutAlgorithms keys asSortedCollection asArray) ].
 	(selector key isNil or: [ layouter supports: (Smalltalk at: selector key) ]) ifFalse: [
 		OPMcpToolError signal: 'This diagram does not support the "' , algorithm , '" layout' ].
 	self inTransactionOf: diagramController labeled: 'MCP: layout' do: [
