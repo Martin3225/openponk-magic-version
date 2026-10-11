@@ -6,7 +6,7 @@ export OPENPONK_MCP_PORT="${OPENPONK_MCP_TEST_PORT:-47998}"  # headless instance
 SRC="$1"; OUT="$2"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/opregress.XXXX")"
 cp "$SRC/openponk-plugins.image" "$SRC/openponk-plugins.changes" "$TMP/"
-ln -s "$DIR/build/image/Pharo14.0-64bit-4da0477.sources" "$TMP/" 2>/dev/null
+ln -s "$DIR"/build/image/*.sources "$TMP/" 2>/dev/null
 "$DIR/build/Pharo.app/Contents/MacOS/Pharo" --headless "$TMP/openponk-plugins.image" eval "
 | classes result s |
 classes := ((self packageOrganizer packages select: [ :p | (p name beginsWith: 'OpenPonk') and: [ (p name beginsWith: 'OpenPonk-Extras') not ] ])

@@ -163,7 +163,8 @@ OPDiagramElementsDuplicatorTest >> testCommandIsInContextMenuAndOnCmdDAndCtrlD [
 
 { #category : 'tests - command' }
 OPDiagramElementsDuplicatorTest >> testKeyboardShortcutsDuplicateSelection [
-	"Key events sent to the canvas morph, as when the user presses Cmd+D (Mac) or Ctrl+D."
+	"Key events sent to the canvas morph, as when the user presses Cmd+D (Mac) or Ctrl+D.
+	The meta modifier is Cmd on Mac and Ctrl elsewhere, so its event code comes from the platform."
 
 	| model entity canvasMorph |
 	model := OPErd new name: 'erd'; yourself.
@@ -177,7 +178,7 @@ OPDiagramElementsDuplicatorTest >> testKeyboardShortcutsDuplicateSelection [
 				 yourself).
 	canvasMorph := diagramController canvasPresenter adapter widget.
 
-	#( 64 16 ) doWithIndex: [ :modifierButtons :index |
+	{ KMModifier meta eventCode. KMModifier ctrl eventCode } doWithIndex: [ :modifierButtons :index |
 		canvasMorph handleKeyDown: ((KeyboardEvent new
 				  setType: #keyDown
 				  buttons: modifierButtons

@@ -84,7 +84,7 @@ OPOntoUMLMenusTest >> testGeneralizationSetShortcut [
 	self generalize: adult to: person.
 	self select: { child. adult }.
 
-	self pressKey: $g withModifier: 64.
+	self pressKey: $g withModifier: KMModifier meta eventCode.
 
 	self assert: self menusInWorld size equals: 1.
 	self assert: (self menusInWorld first items anySatisfy: [ :each | each contents = '{disjoint, complete}' ])
